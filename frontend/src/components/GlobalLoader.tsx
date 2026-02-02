@@ -1,0 +1,19 @@
+import { useAppSelector } from "../hooks/useAppSelector";
+import { selectIsLoading as selectAuthLoading } from "../features/auth/redux/authSlice";
+import { selectIsLoading as selectHomeLoading } from "../features/home/redux/homeSlice";
+import { selectLoading as selectListLoading } from "../features/list/redux/listSlice";
+import Loader from "./Loader";
+
+const GlobalLoader = () => {
+    const isAuthLoading = useAppSelector(selectAuthLoading);
+    const isHomeLoading = useAppSelector(selectHomeLoading);
+    const isListLoading = useAppSelector(selectListLoading);
+
+    const isLoading = isAuthLoading || isHomeLoading || isListLoading;
+
+    if (!isLoading) return null;
+
+    return <Loader />;
+};
+
+export default GlobalLoader;
