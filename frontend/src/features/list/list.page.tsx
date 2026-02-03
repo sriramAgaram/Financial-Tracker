@@ -82,7 +82,7 @@ const ListPage = () => {
       </div>
 
       {/* Fixed Paginator Footer */}
-      <div className="fixed bottom-0 right-0 left-64 z-20 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 right-0 left-0 sm:left-64 z-20 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-all duration-300">
         <div className="max-w-3xl mx-auto flex justify-center w-full">
             <Paginator
             first={(pagenateData.pageNumber - 1) * pagenateData.rows}
