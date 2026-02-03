@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../hooks/useAppSelector'
-import { fetchDashboardDataStart } from '../redux/homeSlice'
+import { homeDataActions } from '../redux/homeSagas'
 
 const Dashboard: React.FC = () => {
   const dispatch = useAppDispatch()
   const { dashboardData, isLoading, error } = useAppSelector((state: any) => state.home)
 
   useEffect(() => {
-    dispatch(fetchDashboardDataStart())
+    dispatch(homeDataActions.request())
   }, [dispatch])
 
   if (isLoading) {

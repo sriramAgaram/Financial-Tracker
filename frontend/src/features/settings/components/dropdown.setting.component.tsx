@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from "primereact/button";
 import { selectExpenseTypes } from "../../home/redux/homeSlice";
