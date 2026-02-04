@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from "primereact/button";
-import { selectExpenseTypes } from "../../home/redux/homeSlice";
-import { useAppSelector } from "../../../hooks/useAppSelector";
 import { useDispatch } from "react-redux";
-import { expenseTypeActions, deleteExpenseTypeActions, addExpenseTypeActions } from "../../home/redux/homeSagas";
+import { deleteExpenseTypeActions, addExpenseTypeActions } from "../../home/redux/homeSagas";
 import { SettingDialog } from "./dialog.setting.component";
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { InputText } from "primereact/inputtext";
+import { useExpenseTypes } from "../../../hooks/useExpenseTypes";
 
 
 export default function DropdownSettingComponent() {
@@ -15,7 +14,7 @@ export default function DropdownSettingComponent() {
     const [editName, setEditName] = useState('');
     const [addName, setAddName] = useState('');
     const [visible, setVisible] = useState(false)
-    const expenstTypeOptions = useAppSelector(selectExpenseTypes);
+    const expenstTypeOptions = useExpenseTypes();
     const dispatch = useDispatch();
 
 
@@ -41,13 +40,8 @@ export default function DropdownSettingComponent() {
         e.preventDefault()
         if (!addName.trim()) return;
         dispatch(addExpenseTypeActions.request({ expense_name: addName }))
-        setAddName(''); // Clear input after add
+        setAddName(''); 
     }
-
-    useEffect(() => {
-        dispatch(expenseTypeActions.request())
-    }, [data])
-
 
 
     const selectedTypeTemplate = (option: any, props: any) => {
@@ -66,7 +60,7 @@ export default function DropdownSettingComponent() {
         return (
             <div className="flex items-center justify-between w-full px-2 py-1 group">
                 <div className="font-medium text-gray-700">{option.expense_name}</div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="flex gap-2">
                     <Button
                         icon="pi pi-pencil"
                         rounded

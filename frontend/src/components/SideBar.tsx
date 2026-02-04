@@ -55,7 +55,7 @@ const SideBar = ({ isMobileOpen, onClose }: SideBarProps) => {
                                 <span className="inline-flex items-center justify-center w-5 h-5 ms-2 text-xs font-semibold text-white bg-red-500 rounded-full shadow-sm">2</span>
                             </Link>
                         </li>
-                        {isLogged && (
+                        {!isLogged && (
                             <Fragment>
                                 <li>
                                     <Link to='/login' onClick={handleLinkClick} className="flex items-center px-4 py-3 text-body rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">

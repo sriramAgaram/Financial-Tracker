@@ -8,6 +8,9 @@ import { loginActions, signupActions, logoutActions } from './authSagas'
  * AFTER: extraReducers that listen to the factory-generated action types
  */
 
+const token = localStorage.getItem('token')
+
+
 // ============================================
 // STATE INTERFACE
 // ============================================
@@ -25,7 +28,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  isAuthenticated: false,
+  isAuthenticated: !! token,
   isLoading: false,
   error: null,
   signupSuccess: false,

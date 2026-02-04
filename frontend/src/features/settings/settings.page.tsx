@@ -6,7 +6,6 @@ import { LimitFetchActions, settingsUpdateActions } from "./redux/settingsSagas"
 import { useAppSelector } from "../../hooks/useAppSelector";
 import { selectUserSettings } from "./redux/settingsSlice";
 import { Button } from "primereact/button";
-import { expenseTypeActions } from "../home/redux/homeSagas";
 import DropdownSettingComponent from "./components/dropdown.setting.component";
 
 const SettingsPage = () => {
@@ -22,7 +21,6 @@ const SettingsPage = () => {
 
   useEffect(() => {
     dispatch(LimitFetchActions.request());
-    dispatch(expenseTypeActions.request());
   }, []);
 
   useEffect(() => {

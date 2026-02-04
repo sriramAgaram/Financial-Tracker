@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import {selectExpenseTypes, selectDashboardData } from './redux/homeSlice';
+import { useDispatch } from 'react-redux'
+import { selectDashboardData } from './redux/homeSlice';
 import { InputText } from "primereact/inputtext";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from 'primereact/dropdown';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { useAppSelector } from '../../hooks/useAppSelector';
-import { addTransactionActions, expenseTypeActions, homeDataActions } from './redux/homeSagas';
+import { addTransactionActions, homeDataActions } from './redux/homeSagas';
+import { useExpenseTypes } from '../../hooks/useExpenseTypes';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch();
-  const expenseTypes = useSelector(selectExpenseTypes);
-  const amountData = useAppSelector(selectDashboardData)
+  const amountData = useAppSelector(selectDashboardData);
+  const expenseTypes = useExpenseTypes();
   const [data, setData] = useState({
     expences_type_id: null,
     amount: 0
@@ -20,7 +21,6 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     dispatch(homeDataActions.request())
-    dispatch(expenseTypeActions.request())
   }, [])
 
   const handleChange = (e: any) => {
