@@ -13,10 +13,24 @@ exports.signup = async (req, res, next) => {
         const bcryptPass = await bcrypt.hash(password, 13);
         let signupFields = getAuthFields({name, username})
         signupFields['password'] = bcryptPass
-        const { data, error: insertError } = await supabase.from('users').insert([signupFields]);
+        const { data, error: insertError } = await supabase.from('users').insert([signupFields]).select().single();
         if (insertError) {
             return res.status(500).json({ status: false, msg: 'Signup failed', error: insertError });
         }
+
+        await supabase.from('amount_limit').insert([{
+            user_id: data.user_id,
+            monthly_limit: 1000,
+            daily_limit: 100
+        }]);
+
+        await supabase.from('expense_type').insert([{
+            user_id: data.user_id,
+            expense_name: 'Travel Expenses'
+        }]);
+
+
+
         res.status(200).json({ status: true, msg: "User signed up successfully", data })
     } catch (error) {
         res.status(500).json({ status: false, msg: 'Signup Failed', error })
