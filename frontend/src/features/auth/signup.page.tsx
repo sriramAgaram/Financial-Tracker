@@ -2,14 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { InputText } from "primereact/inputtext";
-import { selectSignupSuccess } from "./redux/authSlice";
+import { selectError, selectSignupSuccess } from "./redux/authSlice";
 import { signupActions } from "./redux/authSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
+import { showToast } from "../../store/uiSlice";
 
 const SignUpPage: React.FC = () => {
 
     const dispatch = useDispatch();
     const signupSuccess = useAppSelector(selectSignupSuccess);
+    const signupError = useAppSelector(selectError);
 
     const [value, setValue] = useState({
         name: '',
@@ -21,7 +23,14 @@ const SignUpPage: React.FC = () => {
         if (signupSuccess) {
             setValue({ name: '', username: '', password: '' });
         }
-    }, [signupSuccess]);
+        if (signupError) {
+            dispatch(showToast({
+                severity: 'error',
+                summary: 'Error',
+                detail: signupError || 'Something went wrong',
+                life: 3000}))
+        }
+    }, [signupSuccess, signupError]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value: inputValue } = e.target;

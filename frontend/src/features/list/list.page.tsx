@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useDispatch } from "react-redux"
-import { listTransactionActions } from "./redux/listSagas";
+import { deleteTransactionActions, listTransactionActions } from "./redux/listSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
-import { selectTotalCount, selectTransactionsList } from "./redux/listSlice";
+import { selectDeleteSuccess, selectTotalCount, selectTransactionsList, selectUpdateSuccess } from "./redux/listSlice";
 import { format } from "date-fns";
 import { Paginator } from 'primereact/paginator';
 import { Button } from 'primereact/button';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { EditSettingPopup } from "./components/EditListPopup.list";
+
+const EditSettingPopup = lazy(() => import("./components/EditListPopup.list").then(module => ({ default: module.EditSettingPopup })));
 
 const ListPage = () => {
   const [pagenateData, setPagenateDate] = useState({
@@ -15,6 +16,8 @@ const ListPage = () => {
     rows: 5,
     totalRecords: 120
   });
+  const updateSuccess = useAppSelector(selectUpdateSuccess);
+  const deleteSuccess = useAppSelector(selectDeleteSuccess);
 
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
@@ -31,16 +34,20 @@ const ListPage = () => {
 
   useEffect(() => {
     dispatch(listTransactionActions.request(pagenateData));
-  }, [pagenateData])
+  }, [pagenateData , updateSuccess, deleteSuccess])
   return (
     <div className="relative h-[calc(100vh-64px)] flex flex-col bg-slate-50/50">
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-24">
         <ConfirmDialog />
-        <EditSettingPopup 
-            data={selectedTransaction} 
-            visible={!!selectedTransaction} 
-            setVisible={() => setSelectedTransaction(null)}
-        />
+        {selectedTransaction && (
+          <Suspense fallback={null}>
+            <EditSettingPopup 
+                data={selectedTransaction} 
+                visible={!!selectedTransaction} 
+                setVisible={() => setSelectedTransaction(null)}
+            />
+          </Suspense>
+        )}
         
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-6">
@@ -96,7 +103,7 @@ const ListPage = () => {
                                     e.stopPropagation();
                                     console.log(item)
                                     confirmDialog({
-                                        message: `Are you sure you want to edit ${item.expense_name}?`,
+                                        message: `Are you sure you want to edit ${item.expense_type?.expense_name}?`,
                                         header: 'Edit Confirmation',
                                         icon: 'pi pi-exclamation-triangle',
                                         acceptClassName: 'p-button-warning',
@@ -119,9 +126,7 @@ const ListPage = () => {
                                         icon: 'pi pi-info-circle',
                                         defaultFocus: 'reject',
                                         acceptClassName: 'p-button-danger',
-                                        accept: () => {
-                                            console.log('Delete confirmed', item);
-                                        }
+                                        accept: () => dispatch(deleteTransactionActions.request({transaction_id: item.transaction_id}))
                                     });
                                 }}
                             />

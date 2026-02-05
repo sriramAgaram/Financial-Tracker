@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
-import { listTransactionActions } from "./listSagas"
+import { deleteTransactionActions, listTransactionActions, updateTransactionActions } from "./listSagas"
 
 interface  ResponseOfTransaction{
   transaction_id : number,
@@ -15,7 +15,9 @@ interface  ResponseOfTransaction{
 interface ListState {
   transactions: ResponseOfTransaction[],
   loading: boolean,
-  error: string | null
+  error: string | null,
+  updateSuccess: boolean,
+  deleteSuccess: boolean,
   totalRecords: number
 }
 
@@ -24,7 +26,9 @@ const initialState:ListState  = {
   transactions:[],
   loading: false,
   error: null,
-  totalRecords: 0
+  totalRecords: 0,
+  updateSuccess: false,
+  deleteSuccess: false
 }
 
 
@@ -47,6 +51,30 @@ const createListSlice = createSlice({
       state.loading = false
       state.error = action.payload
     })
+    builder.addCase(updateTransactionActions.types.REQUEST, (state) => {
+      state.loading = true
+      state.updateSuccess = false
+    })
+    builder.addCase(updateTransactionActions.types.SUCCESS , (state)=>{
+      state.loading = false
+      state.updateSuccess = true
+    })
+    builder.addCase(updateTransactionActions.types.FAILURE , (state)=>{
+      state.loading = false
+      state.updateSuccess = false
+    })
+    builder.addCase(deleteTransactionActions.types.REQUEST, (state) => {
+      state.loading = true
+      state.deleteSuccess = false
+    })
+    builder.addCase(deleteTransactionActions.types.SUCCESS , (state)=>{
+      state.loading = false
+      state.deleteSuccess = true
+    })
+    builder.addCase(deleteTransactionActions.types.FAILURE , (state)=>{
+      state.loading = false
+      state.deleteSuccess = false
+    })
   }
 })
 
@@ -57,3 +85,5 @@ export const selectLoading = (state: {list: ListState}) => state.list.loading
 export const selectError = (state: {list: ListState}) => state.list.error
 export const selectTransactionsList = (state: {list: ListState}) => state.list.transactions;
 export const selectTotalCount = (state: {list: ListState}) =>state.list.totalRecords
+export const selectUpdateSuccess = (state: {list: ListState}) =>state.list.updateSuccess
+export const selectDeleteSuccess = (state: {list: ListState}) =>state.list.deleteSuccess

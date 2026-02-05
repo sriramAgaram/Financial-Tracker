@@ -49,7 +49,8 @@ export function createApiWorker<TPayload, TResponse>(
         yield put(actions.failure(response?.msg || 'Request failed'))
       }
     } catch (error: any) {
-      yield put(actions.failure(error.message || 'An error occurred'))
+      const errorMessage = error.response?.data?.msg || error.message || 'An error occurred';
+      yield put(actions.failure(errorMessage));
     }
   }
 }

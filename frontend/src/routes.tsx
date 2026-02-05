@@ -1,11 +1,29 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { ProgressSpinner } from 'primereact/progressspinner'
 import Layout from './layout'
 import AuthLayout from './features/auth/auth.layout';
-import HomePage from './features/home/home.page'
-import SignUpPage from './features/auth/signup.page'
-import LoginPage from './features/auth/login.page';
-import SettingsPage from './features/settings/settings.page';
-import ListPage from './features/list/list.page';
+
+// Loading Component
+const Loading = () => (
+    <div className="flex items-center justify-center h-screen w-full bg-slate-50/50">
+        <ProgressSpinner style={{width: '50px', height: '50px'}} strokeWidth="4" animationDuration=".5s"/>
+    </div>
+);
+
+// Lazy Imports
+const HomePage = lazy(() => import('./features/home/home.page'));
+const SignUpPage = lazy(() => import('./features/auth/signup.page'));
+const LoginPage = lazy(() => import('./features/auth/login.page'));
+const SettingsPage = lazy(() => import('./features/settings/settings.page'));
+const ListPage = lazy(() => import('./features/list/list.page'));
+
+// Loadable Helper
+const Loadable = (Component: React.ComponentType) => (
+  <Suspense fallback={<Loading />}>
+    <Component />
+  </Suspense>
+);
 
 const Routes = () => {
   const router = createBrowserRouter([
@@ -15,7 +33,7 @@ const Routes = () => {
       children: [
         {
           index: true,
-          element: <HomePage />
+          element: Loadable(HomePage)
         }
       ]
     },
@@ -25,7 +43,7 @@ const Routes = () => {
       children: [
         {
           index: true,
-          element: <LoginPage />
+          element: Loadable(LoginPage)
         }
       ]
     },
@@ -35,7 +53,7 @@ const Routes = () => {
       children:[
         {
           index:true,
-          element:<SignUpPage />
+          element: Loadable(SignUpPage)
         }
       ]
     },
@@ -45,7 +63,7 @@ const Routes = () => {
       children:[
         {
           index: true,
-          element:<SettingsPage />
+          element: Loadable(SettingsPage)
         }
       ]
     },
@@ -55,7 +73,7 @@ const Routes = () => {
       children:[
         {
           index: true,
-          element:<ListPage />
+          element: Loadable(ListPage)
         }
       ]
     }
