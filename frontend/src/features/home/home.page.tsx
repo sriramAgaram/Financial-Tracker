@@ -4,7 +4,6 @@ import { selectDashboardData } from './redux/homeSlice';
 import { InputText } from "primereact/inputtext";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from 'primereact/dropdown';
-import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { addTransactionActions, homeDataActions } from './redux/homeSagas';
@@ -35,7 +34,7 @@ const HomePage: React.FC = () => {
 
     setData(prev => ({
       ...prev,
-      [name]: name === 'amount' ? parseFloat(value) || 0 : value
+      [name]: name === 'amount' ? Number.parseFloat(value) || 0 : value
     }));
   };
 
@@ -79,7 +78,6 @@ const HomePage: React.FC = () => {
       </div>
 
        <div className='flex w-full justify-center items-center pt-20'>
-          <Card title="Add New Transaction" className="w-full max-w-md">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
                 <FloatLabel>
@@ -117,7 +115,6 @@ const HomePage: React.FC = () => {
                 disabled={!data.expences_type_id || data.amount <= 0}
               />
             </form>
-          </Card>
         </div>
     </div>
   )

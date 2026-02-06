@@ -6,7 +6,7 @@ import { selectDeleteSuccess, selectTotalCount, selectTransactionsList, selectUp
 import { format } from "date-fns";
 import { Paginator } from 'primereact/paginator';
 import { Button } from 'primereact/button';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import {  confirmDialog } from 'primereact/confirmdialog';
 
 const EditSettingPopup = lazy(() => import("./components/EditListPopup.list").then(module => ({ default: module.EditSettingPopup })));
 
@@ -20,6 +20,16 @@ const ListPage = () => {
   const deleteSuccess = useAppSelector(selectDeleteSuccess);
 
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => {
+        setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const onPageChange = (e:any) => {
     setPagenateDate({
@@ -35,10 +45,14 @@ const ListPage = () => {
   useEffect(() => {
     dispatch(listTransactionActions.request(pagenateData));
   }, [pagenateData , updateSuccess, deleteSuccess])
+
+  const paginatorTemplate = isMobile 
+    ? "PrevPageLink CurrentPageReport NextPageLink RowsPerPageDropdown"
+    : "FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport";
+
   return (
     <div className="relative h-[calc(100vh-64px)] flex flex-col bg-slate-50/50">
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-24">
-        <ConfirmDialog />
         {selectedTransaction && (
           <Suspense fallback={null}>
             <EditSettingPopup 
@@ -142,7 +156,8 @@ const ListPage = () => {
 
 
       {/* Fixed Paginator Footer */}
-      <div className="fixed bottom-0 right-0 left-0 sm:left-64 z-20 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6 py-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-all duration-300">
+      <div className="fixed bottom-0 right-0 left-0 sm:left-64 z-20 bg-white/90 backdrop-blur-xl border-t border-slate-200 px-6
+       shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-all duration-300">
         <div className="max-w-3xl mx-auto flex justify-center w-full">
             <Paginator
             first={(pagenateData.pageNumber - 1) * pagenateData.rows}
@@ -151,7 +166,7 @@ const ListPage = () => {
             rowsPerPageOptions={[5, 10, 20]}
             onPageChange={onPageChange}
             className="bg-transparent border-none p-0 w-full"
-            template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
+            template={paginatorTemplate}
             currentPageReportTemplate="{first} - {last} of {totalRecords}"
             />
         </div>

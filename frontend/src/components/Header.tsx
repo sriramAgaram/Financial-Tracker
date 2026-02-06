@@ -1,6 +1,7 @@
 import { Button } from 'primereact/button'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import {  confirmDialog } from 'primereact/confirmdialog';
 
 
 interface HeaderProps {
@@ -10,9 +11,20 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ pageTitle, onMobileMenuToggle }) => {
   const navigate = useNavigate()
+  
   const logout = () => {
-    localStorage.removeItem('token')
-    navigate('/login')
+    confirmDialog({
+        message: 'Are you sure you want to sign out?',
+        header: 'Sign Out Confirmation',
+        icon: 'pi pi-power-off',
+        acceptClassName: 'p-button-danger',
+        acceptLabel: 'Sign Out',
+        rejectLabel: 'Cancel',
+        accept: () => {
+            localStorage.removeItem('token')
+            navigate('/login')
+        }
+    });
   }
   return (
     <div className="fixed top-0 right-0 left-0 sm:left-64 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 transition-all duration-300">

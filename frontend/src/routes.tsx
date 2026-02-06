@@ -17,6 +17,7 @@ const SignUpPage = lazy(() => import('./features/auth/signup.page'));
 const LoginPage = lazy(() => import('./features/auth/login.page'));
 const SettingsPage = lazy(() => import('./features/settings/settings.page'));
 const ListPage = lazy(() => import('./features/list/list.page'));
+const DashboardPage = lazy(()=> import('./features/Dashboard/dashboard.page'))
 
 // Loadable Helper
 const Loadable = (Component: React.ComponentType) => (
@@ -29,7 +30,7 @@ const Routes = () => {
   const router = createBrowserRouter([
     {
       path: '/',
-      element: <Layout pageTitle="Dashboard" />,
+      element: <Layout pageTitle="Home" />,
       children: [
         {
           index: true,
@@ -74,6 +75,16 @@ const Routes = () => {
         {
           index: true,
           element: Loadable(ListPage)
+        }
+      ]
+    },
+    {
+      path: 'dashboard',
+      element:<Layout pageTitle='Dashboard' />,
+      children:[
+        {
+          index: true,
+          element: Loadable(DashboardPage)
         }
       ]
     }

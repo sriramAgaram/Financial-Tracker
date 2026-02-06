@@ -4,7 +4,7 @@ import { Button } from "primereact/button";
 import { useDispatch } from "react-redux";
 import { deleteExpenseTypeActions, addExpenseTypeActions } from "../../home/redux/homeSagas";
 import { SettingDialog } from "./dialog.setting.component";
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { confirmDialog } from 'primereact/confirmdialog';
 import { InputText } from "primereact/inputtext";
 import { useExpenseTypes } from "../../../hooks/useExpenseTypes";
 
@@ -59,7 +59,7 @@ export default function DropdownSettingComponent() {
     const typeOptionTemplate = (option: any) => {
         return (
             <div className="flex items-center justify-between w-full px-2 py-1 group">
-                <div className="font-medium text-gray-700">{option.expense_name}</div>
+                <div className="font-medium text-gray-700 truncate max-w-[150px] md:max-w-xs" title={option.expense_name}>{option.expense_name}</div>
                 <div className="flex gap-2">
                     <Button
                         icon="pi pi-pencil"
@@ -86,7 +86,6 @@ export default function DropdownSettingComponent() {
     return (
 
         <div className="card flex flex-col gap-4 w-full">
-            <ConfirmDialog />
             <div className="flex justify-content-center w-full">
                 <Dropdown
                     value={data}
@@ -99,20 +98,22 @@ export default function DropdownSettingComponent() {
                     valueTemplate={selectedTypeTemplate}
                     itemTemplate={typeOptionTemplate}
                     className="w-full"
+                    panelClassName="w-full max-w-[90vw] md:max-w-full"
                 />
             </div>
 
-            <form onSubmit={handleAdd} className="flex gap-2 w-full">
+            <form onSubmit={handleAdd} className="flex flex-col md:flex-row gap-3 w-full">
                 <InputText
                     value={addName}
                     onChange={(e) => setAddName(e.target.value)}
                     placeholder="Add New Expense Type"
-                    className="w-full"
+                    className="w-full md:flex-1"
                 />
                 <Button
                     label="Add"
                     icon="pi pi-plus"
                     type="submit"
+                    className="w-full md:w-auto px-6 whitespace-nowrap"
                 />
             </form>
 

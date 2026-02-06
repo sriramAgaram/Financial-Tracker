@@ -41,36 +41,50 @@ export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
 
     return (
         <div>
-            <Dialog header="Edit Transaction" visible={visible} style={{ width: '50vw' }} onHide={() => { if (!visible) return; setVisible(false); }}>
-                <div className="flex flex-col gap-4 w-full">
-                    <Dropdown
-                        value={formData.expense_type_id}
-                        onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            expense_type_id: e.value
-                        }))}
-                        options={expencesTypes}
-                        optionLabel="expense_name"
-                        optionValue="expense_type_id"
-                        placeholder="Select an Expense Type"
-                        filter
-                        filterDelay={400}
-                        className="w-full"
-                    />
-                    <InputText
-                        value={formData.amount.toString()}
-                        onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            amount: e.target.value
-                        }))}
-                        placeholder="Amount"
-                        keyfilter="num"
-                        className="w-full"
-                    />
+            <Dialog 
+                header="Edit Transaction" 
+                visible={visible} 
+                style={{ width: '50vw' }} 
+                breakpoints={{ '960px': '75vw', '641px': '90vw' }}
+                onHide={() => { if (!visible) return; setVisible(false); }}
+            >
+                <div className="flex flex-col gap-4 w-full pt-2">
+                    <span className="p-float-label w-full">
+                        <Dropdown
+                            inputId="edit-expense-type"
+                            value={formData.expense_type_id}
+                            onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                expense_type_id: e.value
+                            }))}
+                            options={expencesTypes}
+                            optionLabel="expense_name"
+                            optionValue="expense_type_id"
+                            placeholder="Select an Expense Type"
+                            filter
+                            filterDelay={400}
+                            className="w-full"
+                        />
+                         <label htmlFor="edit-expense-type">Expense Category</label>
+                    </span>
+
+                    <span className="p-float-label w-full mt-2">
+                         <InputText
+                            value={formData.amount.toString()}
+                            onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                amount: e.target.value
+                            }))}
+                            keyfilter="num"
+                            className="w-full"
+                        />
+                        <label htmlFor="edit-amount">Amount</label>
+                    </span>
 
                     <Button 
-                        label="Update" 
+                        label="Update Transaction" 
                         icon="pi pi-check" 
+                        className="w-full mt-2"
                         onClick={handleUpdate}
                         disabled={!formData.expense_type_id || !formData.amount}
                     />
