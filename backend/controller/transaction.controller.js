@@ -193,3 +193,35 @@ exports.delete = async (req, res) => {
         });
     }
 }
+
+exports.weeklyData = async (req, res) => {
+    try {
+        const { fromDate, toDate } = req.body;
+        
+        const { data, error } = await supabase.rpc('get_daily_totals', {
+            p_user_id: req.user.userId,
+            p_from_date: fromDate,
+            p_to_date: toDate
+        });
+
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        // Extract arrays for chart
+        const chartData = data.map(day => day.total_amount);
+        const labels = data.map(day => day.date);
+        const totalAmount = chartData.reduce((sum, val) => sum + val, 0);
+
+        return res.status(200).json({
+            status: true,
+            msg: "Transaction Fetched successfully",
+            chartData,      // [150, 250, 350, 450, 200, 300, 100]
+            labels,         // ['2024-01-01', '2024-01-02', ...]
+            totalAmount
+        });
+
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};

@@ -8,5 +8,6 @@ route.put('/update/:id', transactionController.update);
 route.post('/lists', transactionController.lists);
 // route.get('/:id', transactionController.getById);
 route.delete('/delete/:id', transactionController.delete);
+route.post('/weeklydata', transactionController.weeklyData);
 
 module.exports = route;

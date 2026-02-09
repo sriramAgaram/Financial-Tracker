@@ -6,6 +6,7 @@ import homeReducer from '../features/home/redux/homeSlice'
 import listReducer from '../features/list/redux/listSlice'
 import settingsReducer from '../features/settings/redux/settingsSlice'
 import uiReducer from './uiSlice'
+import dashboardReducer from '../features/Dashboard/redux/dashboard.slice'
 
 // Create the saga middleware
 const sagaMiddleware = createSagaMiddleware()
@@ -18,6 +19,7 @@ export const store = configureStore({
     list: listReducer,
     settings: settingsReducer,
     ui: uiReducer,
+    dashboard: dashboardReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
