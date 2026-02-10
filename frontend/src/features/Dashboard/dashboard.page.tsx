@@ -3,13 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { format, subDays } from "date-fns";
 import Barchart from "./components/Barchart.tsx";
 import { weeklyDataActions } from "./redux/dashboard.saga.ts";
-import { selectDashboardLoading, selectWeeklyData } from "./redux/dashboard.slice.ts";
+import { selectWeeklyData } from "./redux/dashboard.slice.ts";
 
 const DashboardPage = () => {
     const dispatch = useDispatch();
     const weeklyData = useSelector(selectWeeklyData);
-    const loading = useSelector(selectDashboardLoading)
-
     useEffect(() => {
         const toDate = format(new Date(), "yyyy-MM-dd");
         const fromDate = format(subDays(new Date(), 7), "yyyy-MM-dd");
