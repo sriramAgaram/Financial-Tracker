@@ -216,8 +216,8 @@ exports.weeklyData = async (req, res) => {
         return res.status(200).json({
             status: true,
             msg: "Transaction Fetched successfully",
-            chartData,      // [150, 250, 350, 450, 200, 300, 100]
-            labels,         // ['2024-01-01', '2024-01-02', ...]
+            chartData,      
+            labels,      
             totalAmount
         });
 
