@@ -216,7 +216,7 @@ exports.weeklyData = async (req, res) => {
 
         // Extract arrays for chart
         const chartData = data.map(day => day.total_amount);
-        const labels = data.map(day => day.date);
+        const labels = data.map(day => day.transaction_date);
         const totalAmount = chartData.reduce((sum, val) => sum + val, 0);
 
         return res.status(200).json({
