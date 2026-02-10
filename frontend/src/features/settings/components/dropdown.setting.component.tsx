@@ -7,6 +7,7 @@ import { SettingDialog } from "./dialog.setting.component";
 import { confirmDialog } from 'primereact/confirmdialog';
 import { InputText } from "primereact/inputtext";
 import { useExpenseTypes } from "../../../hooks/useExpenseTypes";
+import { showToast } from "../../../store/uiSlice";
 
 
 export default function DropdownSettingComponent() {
@@ -34,6 +35,12 @@ export default function DropdownSettingComponent() {
             acceptClassName: 'p-button-danger',
             accept: () => dispatch(deleteExpenseTypeActions.request(option.expense_type_id))
         });
+         dispatch(showToast({
+                severity:'success',
+                summary: 'Success',
+                detail: 'Delete Success !',
+                life: 3000
+              }))
     }
 
     const handleAdd = (e: React.FormEvent) => {
@@ -41,6 +48,12 @@ export default function DropdownSettingComponent() {
         if (!addName.trim()) return;
         dispatch(addExpenseTypeActions.request({ expense_name: addName }))
         setAddName(''); 
+         dispatch(showToast({
+                severity:'success',
+                summary: 'Success',
+                detail: 'Category Added',
+                life: 3000
+              }))
     }
 
 
@@ -98,7 +111,6 @@ export default function DropdownSettingComponent() {
                     valueTemplate={selectedTypeTemplate}
                     itemTemplate={typeOptionTemplate}
                     className="w-full"
-                    panelClassName="w-full max-w-[90vw] md:max-w-full"
                 />
             </div>
 

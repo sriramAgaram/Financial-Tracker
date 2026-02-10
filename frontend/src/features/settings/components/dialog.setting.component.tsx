@@ -6,6 +6,7 @@ import { InputText } from "primereact/inputtext";
 import { FloatLabel } from "primereact/floatlabel";
 import { useDispatch } from "react-redux";
 import { updateExpenseTypeActions } from "../../home/redux/homeSagas";
+import { showToast } from "../../../store/uiSlice";
 
 
 export const SettingDialog = ({ visible, data, setvisible }: { visible: boolean, data: any, setvisible: (visible: boolean) => void }) => {
@@ -20,7 +21,14 @@ export const SettingDialog = ({ visible, data, setvisible }: { visible: boolean,
         if (value?.expense_type_id) {
             dispatch(updateExpenseTypeActions.request({ id: value.expense_type_id, name: value.expense_name }));
             setvisible(false);
+             dispatch(showToast({
+                    severity:'success',
+                    summary: 'Success',
+                    detail: 'Saved Successfully',
+                    life: 3000
+                  }))
         }
+
     };
 
     const footerContent = (

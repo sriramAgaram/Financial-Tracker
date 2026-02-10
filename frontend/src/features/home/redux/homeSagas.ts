@@ -9,7 +9,7 @@ interface HomedataResponse {
 }
 export const homeDataActions = createApiActions<void, HomedataResponse>('home/homeData');
 export const expenseTypeActions = createApiActions<void, any[]>('home/expenseType');
-export const addTransactionActions = createApiActions<{ expense_type_id: number, amount: number }, void>('home/addTransaction');
+export const addTransactionActions = createApiActions<{ expense_type_id: number, amount: number,date: string }, void>('home/addTransaction');
 export const addExpenseTypeActions = createApiActions<{ expense_name: string }, void>('home/addExpenseType');
 export const updateExpenseTypeActions = createApiActions<{ id: number, name: string }, void>('home/updateExpenseType');
 export const deleteExpenseTypeActions = createApiActions<number, void>('home/deleteExpenseType');
@@ -23,7 +23,7 @@ const expenseType = async() =>{
   return response.data
 }
 
-const addTransactionApi =  async (data: { expense_type_id: number, amount: number }) =>{
+const addTransactionApi =  async (data: { expense_type_id: number, amount: number,date: string}) =>{
   const response = await apiClient.post('/transaction/add',data)
   return response.data
 }

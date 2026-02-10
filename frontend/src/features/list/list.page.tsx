@@ -6,7 +6,9 @@ import { selectDeleteSuccess, selectTotalCount, selectTransactionsList, selectUp
 import { format } from "date-fns";
 import { Paginator } from 'primereact/paginator';
 import { Button } from 'primereact/button';
-import {  confirmDialog } from 'primereact/confirmdialog';
+import { confirmDialog } from 'primereact/confirmdialog';
+import { MultiSelect } from 'primereact/multiselect';
+import { useExpenseTypes } from "../../hooks/useExpenseTypes";
 
 const EditSettingPopup = lazy(() => import("./components/EditListPopup.list").then(module => ({ default: module.EditSettingPopup })));
 
@@ -16,11 +18,17 @@ const ListPage = () => {
     rows: 5,
     totalRecords: 120
   });
+
+  const [searchForm , setSearchForm] = useState({
+    category: [],
+    dateRange: null
+  })
   const updateSuccess = useAppSelector(selectUpdateSuccess);
   const deleteSuccess = useAppSelector(selectDeleteSuccess);
 
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const expenseTypes = useExpenseTypes() || []
 
   useEffect(() => {
     const handleResize = () => {
@@ -43,8 +51,8 @@ const ListPage = () => {
   const totalCount = useAppSelector(selectTotalCount)
 
   useEffect(() => {
-    dispatch(listTransactionActions.request(pagenateData));
-  }, [pagenateData , updateSuccess, deleteSuccess])
+    dispatch(listTransactionActions.request({...pagenateData , category: searchForm.category}));
+  }, [pagenateData , updateSuccess, deleteSuccess, searchForm])
 
   const paginatorTemplate = isMobile 
     ? "PrevPageLink CurrentPageReport NextPageLink RowsPerPageDropdown"
@@ -64,17 +72,76 @@ const ListPage = () => {
         )}
         
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-             <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Transactions</h2>
-             <span className="text-sm font-medium text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
-                Total: {totalCount}
-             </span>
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            {/* Left Side: Title & Count */}
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Transactions</h2>
+              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
+                 {totalCount} Total
+              </span>
+               {/* Reset Button */}
+             <Button 
+                icon="pi pi-refresh" 
+                rounded 
+                outlined
+                severity="secondary"
+                aria-label="Reset"
+                className="w-full sm:w-5 h-5 border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 bg-white shadow-sm transition-all"
+                onClick={() => setSearchForm({ category: [], dateRange: null })}
+                tooltip="Reset Filters"
+                tooltipOptions={{ position: 'top' }}
+            />
+            </div>
+
+            {/* Right Side: Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              
+              {/* Date Filter */}
+              {/* <div className="w-full sm:w-auto relative group">
+                <Calendar 
+                    value={searchForm.dateRange} 
+                    onChange={(e) => setSearchForm(prev => ({ ...prev, dateRange: e.value }))} 
+                    selectionMode="range" 
+                    readOnlyInput 
+                    placeholder="Date Range"
+                    className="w-full sm:w-52"
+                    inputClassName="w-full pl-10 pr-4 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all shadow-sm"
+                    showIcon
+                    icon="pi pi-calendar"
+                />
+              </div> */}
+
+               {/* Category Filter */}
+              <div className="w-full sm:w-auto">
+                <MultiSelect 
+                    value={searchForm.category} 
+                    onChange={(e) => setSearchForm(prev => ({ ...prev , category: e.value}))} 
+                    options={expenseTypes} 
+                    filter={true}
+                    filterDelay={300}
+                    optionLabel="expense_name" 
+                    optionValue="expense_type_id"
+                    display="chip"
+                    placeholder="Categories" 
+                    maxSelectedLabels={1} 
+                    className="w-full sm:w-60" 
+                    selectedItemsLabel="{0} Selected"
+                    pt={{
+                        root: { className: 'w-full border border-slate-200 rounded-lg hover:border-indigo-300 focus:border-indigo-400 transition-all shadow-sm bg-white' },
+                        label: { className: 'p-2 text-sm text-slate-700' }
+                    }}
+                />
+            </div>
+            
+           
+          </div>
           </div>
 
           <div className="space-y-4">
             {transactions?.map((item: any) => {
               const expenseName = item.expense_type?.expense_name || 'Unknown';
-              const date = item.created_at ? format(new Date(item.created_at), 'dd MMM, hh:mm a') : '';
+              const date = item.date ? format(new Date(item.date), 'dd MMM, hh:mm a') : '';
               const initial = expenseName.charAt(0).toUpperCase();
 
               return (

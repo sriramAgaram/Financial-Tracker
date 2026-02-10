@@ -84,11 +84,11 @@ exports.update = async (req, res) => {
 
 exports.lists = async (req, res) => {
     try {
-        const { pageNumber, rows } = req.body;
+        const { pageNumber, rows, category } = req.body;
         const from = (pageNumber - 1) * rows;
         const to = from + rows - 1;
 
-        const { data, error, count } = await supabase
+        let query = supabase
             .from('transactions')
             .select(`*, 
                 expense_type(
@@ -96,6 +96,12 @@ exports.lists = async (req, res) => {
                 )`, { count: 'exact' }
             )
             .eq('user_id' , req.user.userId)
+            
+        if(category && category.length > 0){
+            query = query.in('expense_type_id', category)
+        }
+
+        const { data, error, count } = await query
             .order('created_at', { ascending: false })
             .range(from, to);
 

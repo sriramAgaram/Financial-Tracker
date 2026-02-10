@@ -35,7 +35,7 @@ const SideBar = ({ isMobileOpen, onClose }: SideBarProps) => {
                         <li>
                             <Link to="/" onClick={handleLinkClick} className="flex items-center px-4 py-3 text-body rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
                                 <svg className="w-5 h-5 transition duration-75 group-hover:text-indigo-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6.025A7.5 7.5 0 1 0 17.975 14H10V6.025Z" /><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z" /></svg>
-                                <span className="ms-3 font-medium">Dashboard</span>
+                                <span className="ms-3 font-medium">Home</span>
                             </Link>
                         </li>
                         <li>
@@ -54,8 +54,8 @@ const SideBar = ({ isMobileOpen, onClose }: SideBarProps) => {
                         </li>
                         <li>
                             <Link to='/dashboard' onClick={handleLinkClick} className="flex items-center px-4 py-3 text-body rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
-                                <svg className="shrink-0 w-5 h-5 transition duration-75 group-hover:text-indigo-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 13h3.439a.991.991 0 0 1 .908.6 3.978 3.978 0 0 0 7.306 0 .99.99 0 0 1 .908-.6H20M4 13v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6M4 13l2-9h12l2 9M9 7h6m-7 3h8" /></svg>
-                                <span className="flex-1 ms-3 whitespace-nowrap font-medium">Dashboard</span>
+                               <svg className="w-5 h-5 transition duration-75 group-hover:text-indigo-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6.025A7.5 7.5 0 1 0 17.975 14H10V6.025Z" /><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z" /></svg>
+                               <span className="flex-1 ms-3 whitespace-nowrap font-medium">Dashboard</span>
                             </Link>
                         </li>
                         {!isLogged && (

@@ -8,6 +8,8 @@ import { Button } from 'primereact/button';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { addTransactionActions, homeDataActions } from './redux/homeSagas';
 import { useExpenseTypes } from '../../hooks/useExpenseTypes';
+import { Calendar } from 'primereact/calendar';
+import { showToast } from '../../store/uiSlice';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch();
@@ -15,7 +17,8 @@ const HomePage: React.FC = () => {
   const expenseTypes = useExpenseTypes();
   const [data, setData] = useState({
     expences_type_id: null,
-    amount: 0
+    amount: 0,
+    date: new Date()
   });
 
   useEffect(() => {
@@ -40,16 +43,24 @@ const HomePage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (data.expences_type_id && data.amount > 0) {
+    if (data.expences_type_id && data.amount > 0 && data.date) {
       dispatch(addTransactionActions.request({
         expense_type_id: data.expences_type_id,
-        amount: data.amount
+        amount: data.amount,
+        date: new Date(data.date).toISOString()
       }));
       setData({
         expences_type_id: null,
-        amount: 0
+        amount: 0,
+        date: new Date()
       })
-      dispatch(homeDataActions.request())
+      dispatch(homeDataActions.request());
+      dispatch(showToast({
+        severity:'success',
+        summary: 'Success',
+        detail: 'Transaction added successfully',
+        life: 3000
+      }))
     }
   };
 
@@ -77,45 +88,47 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-       <div className='flex w-full justify-center items-center pt-20'>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div>
-                <FloatLabel>
-                  <InputText
-                    id="amount"
-                    name="amount"
-                    value={data.amount.toString()}
-                    onChange={handleChange}
-                    className="w-full"
-                    keyfilter="num"
-                  />
-                  <label htmlFor="amount">Amount (₹)</label>
-                </FloatLabel>
-              </div>
+      <div className='flex w-full justify-center items-center pt-20'>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-9">
+            <Calendar value={data.date} onChange={(e: any) => handleChange({ target: { name: 'date', value: e.value } })} dateFormat="dd/mm/yy" />
 
-              <div>
-                <Dropdown
-                  name="expences_type_id"
-                  value={data.expences_type_id}
-                  onChange={handleChange}
-                  options={expenseTypes}
-                  optionLabel="expense_name"
-                  optionValue="expense_type_id"
-                  placeholder="Select Expense Type"
-                  className="w-full"
-                  showClear
-                />
-              </div>
-
-              <Button
-                type="submit"
-                label="Add Transaction"
-                icon="pi pi-plus"
-                className="w-full mt-2"
-                disabled={!data.expences_type_id || data.amount <= 0}
+          <div>
+            <FloatLabel>
+              <InputText
+                id="amount"
+                name="amount"
+                value={data.amount.toString()}
+                onChange={handleChange}
+                className="w-full"
+                keyfilter="num"
               />
-            </form>
-        </div>
+              <label htmlFor="amount">Amount (₹)</label>
+            </FloatLabel>
+          </div>
+
+          <div>
+            <Dropdown
+              name="expences_type_id"
+              value={data.expences_type_id}
+              onChange={handleChange}
+              options={expenseTypes}
+              optionLabel="expense_name"
+              optionValue="expense_type_id"
+              placeholder="Select Expense Type"
+              className="w-full"
+              showClear
+            />
+          </div>
+
+          <Button
+            type="submit"
+            label="Add Transaction"
+            icon="pi pi-plus"
+            className="w-full mt-2"
+            disabled={!data.expences_type_id || data.amount <= 0}
+          />
+        </form>
+      </div>
     </div>
   )
 }
