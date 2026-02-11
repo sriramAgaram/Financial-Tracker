@@ -15,14 +15,16 @@ const DashboardPage = () => {
         dispatch(weeklyDataActions.request({ fromDate, toDate }));
     }, [dispatch]);
 
+    const ChartData = weeklyData?.chartData || [];
+    const Labels = weeklyData?.labels || [];
+
+
     return (
         <div>
-            {weeklyData && (
                 <Barchart 
-                    chartData={weeklyData.chartData} 
-                    labels={weeklyData.labels}
+                    chartData={ChartData} 
+                    labels={Labels}
                 />
-            )}
         </div>
     );
 };
