@@ -10,6 +10,7 @@ import { addTransactionActions, homeDataActions } from './redux/homeSagas';
 import { useExpenseTypes } from '../../hooks/useExpenseTypes';
 import { Calendar } from 'primereact/calendar';
 import { showToast } from '../../store/uiSlice';
+import { format } from 'date-fns';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch();
@@ -47,7 +48,7 @@ const HomePage: React.FC = () => {
       dispatch(addTransactionActions.request({
         expense_type_id: data.expences_type_id,
         amount: data.amount,
-        date: new Date(data.date).toISOString()
+        date: data.date? format(data.date, 'yyyy-MM-dd') : ''
       }));
       setData({
         expences_type_id: null,
