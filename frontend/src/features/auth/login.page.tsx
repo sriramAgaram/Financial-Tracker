@@ -1,107 +1,134 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { InputText } from "primereact/inputtext";
-import { selectIsAuthenticated } from "./redux/authSlice";
+import { Formik, Form } from "formik";
+import { selectIsAuthenticated, selectIsLoading, selectError } from "./redux/authSlice";
 import { loginActions } from "./redux/authSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
 import { showToast } from "../../store/uiSlice";
+import { loginSchema } from "./services/schema";
 
+interface LoginValues {
+    username: string;
+    password: string;
+}
 
 const LoginPage: React.FC = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const isAuthenticated = useAppSelector(selectIsAuthenticated)
+    const isAuthenticated = useAppSelector(selectIsAuthenticated);
+    const isLoading = useAppSelector(selectIsLoading);
+    const error = useAppSelector(selectError);
 
-    const [value, setValue] = useState({
+    const initialValues: LoginValues = {
         username: '',
         password: ''
-    });
-
-    const handelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value: inputValue } = e.target;
-        setValue(prev => ({
-            ...prev,
-            [name]: inputValue
-        }));
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        dispatch(loginActions.request({ username: value.username, password: value.password }));
-        setValue({
-            username: '',
-            password: ''
-        });
-        dispatch(showToast({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Login successful',
-            life: 3000
-        }))
+    const handleSubmit = (values: LoginValues) => {
+        dispatch(loginActions.request({ username: values.username, password: values.password }));
     };
 
+    // Navigation Effect: Navigate only on success (isAuthenticated)
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/')
+            navigate('/');
+            dispatch(showToast({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Login successful',
+                life: 3000
+            }));
         }
-    }, [isAuthenticated])
+    }, [isAuthenticated, navigate, dispatch]);
+
+    // Error Effect: Show toast on error
+    useEffect(() => {
+        if (error) {
+            dispatch(showToast({
+                severity: 'error',
+                summary: 'Error',
+                detail: error,
+                life: 3000
+            }));
+        }
+    }, [error, dispatch]);
 
     return (
-        <form onSubmit={handleSubmit} className="w-full max-w-md">
-            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/50">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-600 to-purple-600">
-                        Welcome Back
-                    </h1>
-                    <p className="text-slate-500 mt-2 text-sm">Please sign in to continue</p>
-                </div>
-                
-                <div className="flex flex-col gap-6">
-                    <div className="w-full">
-                        <span className="p-float-label w-full block">
-                            <InputText 
-                                name="username" 
-                                id="username" 
-                                value={value.username} 
-                                onChange={handelChange} 
-                                className="w-full p-3 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-slate-700 bg-white/50" 
-                            />
-                            <label htmlFor="username" className="text-slate-500">Username</label>
-                        </span>
-                    </div>
+        <Formik
+            initialValues={initialValues}
+            validationSchema={loginSchema}
+            onSubmit={handleSubmit}
+        >
+            {({ values, errors, touched, handleChange, handleBlur }) => (
+                <Form className="w-full max-w-md">
+                    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/50">
+                        <div className="text-center mb-8">
+                            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-indigo-600 to-purple-600">
+                                Welcome Back
+                            </h1>
+                            <p className="text-slate-500 mt-2 text-sm">Please sign in to continue</p>
+                        </div>
 
-                    <div className="w-full">
-                        <span className="p-float-label w-full block">
-                            <InputText 
-                                name="password" 
-                                id="password" 
-                                type="password"
-                                value={value.password} 
-                                onChange={handelChange}
-                                className="w-full p-3 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-slate-700 bg-white/50" 
-                            />
-                            <label htmlFor="password" className="text-slate-500">Password</label>
-                        </span>
-                    </div>
+                        <div className="flex flex-col gap-6">
+                            {/* Username Field */}
+                            <div className="w-full">
+                                <span className="p-float-label w-full block">
+                                    <InputText
+                                        name="username"
+                                        id="username"
+                                        value={values.username}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        className={errors.username && touched.username ? 'p-invalid w-full' : 'w-full'}
+                                    />
+                                    <label htmlFor="username" className="text-slate-500">Username</label>
+                                </span>
+                                {errors.username && touched.username && (
+                                    <small className="text-red-500 text-xs mt-1 block">{errors.username}</small>
+                                )}
+                            </div>
 
-                    <button 
-                        type="submit" 
-                        className="w-full bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
-                    >
-                        Login
-                    </button>
-                    
-                    <div className="text-center mt-2">
-                        <span className="text-slate-500 text-sm">Don't have an account? </span>
-                        <Link to="/signup" className="text-indigo-600 hover:text-indigo-800 font-medium text-sm transition-colors">
-                            Sign Up
-                        </Link>
+                            {/* Password Field */}
+                            <div className="w-full">
+                                <span className="p-float-label w-full block">
+                                    <InputText
+                                        name="password"
+                                        id="password"
+                                        type="password"
+                                        value={values.password}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        className={errors.password && touched.password ? 'p-invalid w-full' : 'w-full'}
+                                    />
+                                    <label htmlFor="password" className="text-slate-500">Password</label>
+                                </span>
+                                {errors.password && touched.password && (
+                                    <small className="text-red-500 text-xs mt-1 block">{errors.password}</small>
+                                )}
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Logging In...' : 'Login'}
+                            </button>
+
+                            <div className="text-center mt-2">
+                                <span className="text-slate-500 text-sm">Don't have an account? </span>
+                                <Link to="/signup" className="text-indigo-600 hover:text-indigo-800 font-medium text-sm transition-colors">
+                                    Sign Up
+                                </Link>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </form>
+                </Form>
+            )}
+        </Formik>
     );
 };
 
-export default LoginPage
+export default LoginPage;

@@ -4,8 +4,8 @@ import { Chart } from 'primereact/chart';
 
 
 interface ChartProps {
-    chartData: number[]; // Array of numbers
-    labels: string[];    // Array of strings
+    chartData: number[]; 
+    labels: string[];   
 }
 
 export default function Barchart({ chartData, labels }: ChartProps) {
