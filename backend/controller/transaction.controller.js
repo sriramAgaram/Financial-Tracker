@@ -102,7 +102,7 @@ exports.lists = async (req, res) => {
         }
 
         const { data, error, count } = await query
-            .order('created_at', { ascending: false })
+            .order('date', { ascending: false })
             .range(from, to);
 
         if (error) {
