@@ -120,7 +120,7 @@ exports.homedata = async (req, res) => {
             res.status(200).json({
                 status: true,
                 msg: 'Data Fetched Successfully',
-                data: { balanceDailyAmt, balanceMonthlyAmt }
+                data: { balanceDailyAmt, balanceMonthlyAmt, dailyLimit: amt.daily_limit, monthlyLimit: amt.monthly_limit }
             });
         } else {
             res.status(404).json({ status: false, msg: 'Limit data not found' });

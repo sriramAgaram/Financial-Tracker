@@ -3,10 +3,9 @@ import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form } from "formik";
 import { InputText } from "primereact/inputtext";
-import { selectError, selectSignupSuccess, selectIsLoading } from "./redux/authSlice";
+import { selectSignupSuccess, selectIsLoading } from "./redux/authSlice";
 import { signupActions } from "./redux/authSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
-import { showToast } from "../../store/uiSlice";
 import { signupSchema } from "./services/schema";
 
 interface SignupFormValues {
@@ -18,7 +17,6 @@ interface SignupFormValues {
 const SignUpPage: React.FC = () => {
     const dispatch = useDispatch();
     const signupSuccess = useAppSelector(selectSignupSuccess);
-    const signupError = useAppSelector(selectError);
     const isLoading = useAppSelector(selectIsLoading);
     const navigate = useNavigate();
 
@@ -33,18 +31,6 @@ const SignUpPage: React.FC = () => {
             navigate('/login');
         }
     }, [signupSuccess, navigate]);
-
-    useEffect(() => {
-        if (signupError) {
-            dispatch(showToast({
-                severity: 'error',
-                summary: 'Error',
-                detail: signupError || 'Something went wrong',
-                life: 3000
-            }));
-        }
-    }, [signupError, dispatch]);
-
 
     const handleSubmit = (values: SignupFormValues) => {
         dispatch(signupActions.request({

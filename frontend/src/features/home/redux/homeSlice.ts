@@ -5,7 +5,9 @@ import { addTransactionActions, expenseTypeActions, homeDataActions, addExpenseT
 interface HomeState {
   dashboardData: {
     balanceDailyAmt: 0,
-    balanceMonthlyAmt: 0
+    balanceMonthlyAmt: 0,
+    dailyLimit:0,
+    monthlyLimit:0
   } | null
   expenseTypes: any[]
   isLoading: boolean

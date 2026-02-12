@@ -53,12 +53,6 @@ const SettingsPage = () => {
       monthly_limit: formData.monthly_limit,
     }));
     setIsEditing(false);
-    dispatch(showToast({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Settings Saved!',
-      life: 3000
-    }))
   };
 
   const handleChange = (field: string, value: number) => {

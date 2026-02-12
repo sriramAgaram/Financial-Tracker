@@ -8,7 +8,6 @@ import { updateTransactionActions } from "../redux/listSagas";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { format } from "date-fns";
-import { showToast } from "../../../store/uiSlice";
 
 export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
 
@@ -32,12 +31,6 @@ export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
             date: formData.date ? format(formData.date, 'yyyy-MM-dd') : null
         }))
         setVisible(false);
-        dispatch(showToast({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Transaction Updated successfully',
-            life: 3000
-        }))
     }
 
     useEffect(() => {

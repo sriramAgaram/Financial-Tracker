@@ -29,9 +29,9 @@ const deleteTransaction =async (payload:{transaction_id:number}) =>{
 
 
 
-const updateTransactionWorker = createApiWorker(updateTransactionActions, updateTransaction);
+const updateTransactionWorker = createApiWorker(updateTransactionActions, updateTransaction,undefined,undefined,'Transaction Updated');
 const listTransactionWorker = createApiWorker(listTransactionActions, getAllTransactions);
-const deleteTransactionWorker = createApiWorker(deleteTransactionActions, deleteTransaction);
+const deleteTransactionWorker = createApiWorker(deleteTransactionActions, deleteTransaction,undefined,undefined,'Transaction Deleted');
 
 
 function* listWatcher() {

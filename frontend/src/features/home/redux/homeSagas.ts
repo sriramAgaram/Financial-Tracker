@@ -46,9 +46,9 @@ const deleteExpenseTypeApi = async (id: number) => {
 
 const homeDataWorker = createApiWorker(homeDataActions, homeDataApi);
 const expenseTypeWorker = createApiWorker(expenseTypeActions, expenseType)
-const addTransactionWorker = createApiWorker(addTransactionActions, addTransactionApi)
+const addTransactionWorker = createApiWorker(addTransactionActions, addTransactionApi, undefined, undefined, 'Transaction Added')
 const addExpenseTypeWorker = createApiWorker(addExpenseTypeActions, addExpenseTypeApi, undefined, () => expenseTypeActions.request(), 'Expense Type Added');
-const updateExpenseTypeWorker = createApiWorker(updateExpenseTypeActions, updateExpenseTypeApi, undefined, () => expenseTypeActions.request());
+const updateExpenseTypeWorker = createApiWorker(updateExpenseTypeActions, updateExpenseTypeApi, undefined, () => expenseTypeActions.request(), 'Expense Type Updated');
 const deleteExpenseTypeWorker = createApiWorker(deleteExpenseTypeActions, deleteExpenseTypeApi, undefined, () => expenseTypeActions.request(), 'Expense Type Deleted');
 
 function* homeWatcher() {

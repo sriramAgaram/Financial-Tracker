@@ -45,10 +45,21 @@ const HomePage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (data.expences_type_id && data.amount > 0 && data.date) {
+
+      const currentBalance = amountData?.balanceDailyAmt || 0;
+      if (data.amount > currentBalance) {
+        dispatch(showToast({
+          severity: 'warn',
+          summary: 'Daily Limit Exceeded',
+          detail: 'This transaction exceeds your daily limit!',
+          life: 4000
+        }))
+      }
+
       dispatch(addTransactionActions.request({
         expense_type_id: data.expences_type_id,
         amount: data.amount,
-        date: data.date? format(data.date, 'yyyy-MM-dd') : ''
+        date: data.date ? format(data.date, 'yyyy-MM-dd') : ''
       }));
       setData({
         expences_type_id: null,
@@ -56,12 +67,6 @@ const HomePage: React.FC = () => {
         date: new Date()
       })
       dispatch(homeDataActions.request());
-      dispatch(showToast({
-        severity:'success',
-        summary: 'Success',
-        detail: 'Transaction added successfully',
-        life: 3000
-      }))
     }
   };
 
@@ -91,7 +96,7 @@ const HomePage: React.FC = () => {
 
       <div className='flex w-full justify-center items-center pt-20'>
         <form onSubmit={handleSubmit} className="flex flex-col gap-9">
-            <Calendar value={data.date} onChange={(e: any) => handleChange({ target: { name: 'date', value: e.value } })} dateFormat="dd/mm/yy" />
+          <Calendar value={data.date} onChange={(e: any) => handleChange({ target: { name: 'date', value: e.value } })} dateFormat="dd/mm/yy" />
 
           <div>
             <FloatLabel>

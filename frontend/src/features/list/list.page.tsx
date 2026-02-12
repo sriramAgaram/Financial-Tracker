@@ -182,7 +182,6 @@ const ListPage = () => {
                                 className="w-8 h-8"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    console.log(item)
                                     confirmDialog({
                                         message: `Are you sure you want to edit ${item.expense_type?.expense_name}?`,
                                         header: 'Edit Confirmation',

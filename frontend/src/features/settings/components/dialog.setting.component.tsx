@@ -21,12 +21,6 @@ export const SettingDialog = ({ visible, data, setvisible }: { visible: boolean,
         if (value?.expense_type_id) {
             dispatch(updateExpenseTypeActions.request({ id: value.expense_type_id, name: value.expense_name }));
             setvisible(false);
-             dispatch(showToast({
-                    severity:'success',
-                    summary: 'Success',
-                    detail: 'Saved Successfully',
-                    life: 3000
-                  }))
         }
 
     };
