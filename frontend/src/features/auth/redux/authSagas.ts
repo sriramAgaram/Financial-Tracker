@@ -63,9 +63,9 @@ const loginWorker = createApiWorker(loginActions, loginApiCall, (response) => {
   if (response.token) {
     localStorage.setItem('token', response.token)
   }
-})
+},undefined,'Login Successful')
 
-const signupWorker = createApiWorker(signupActions, signupApiCall)
+const signupWorker = createApiWorker(signupActions, signupApiCall,undefined,undefined,'Signup Successful')
 
 // ============================================
 // WATCHER SAGA

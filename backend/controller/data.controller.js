@@ -1,4 +1,5 @@
 const supabase = require("../config/supabase.js");
+const { startOfMonth, startOfDay, addMonths, addDays } = require('date-fns')
 
 exports.getSettingsData = async (req, res) => {
     try {
@@ -75,13 +76,13 @@ exports.homedata = async (req, res) => {
                 msg: 'User ID is required'
             });
         }
-        const currentDate = new Date()
+        const now = new Date()
 
         // Use UTC dates to avoid timezone issues
-        const startOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1));
-        const startOfToday = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()));
-        const startOfNextMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-        const startOfTomorrow = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1));
+        const startMonth = startOfMonth(now)
+        const startToday = startOfDay(now)
+        const startNextMonth = startOfMonth(addMonths(now, 1))
+        const startTomorrow = startOfDay(addDays(now, 1));
 
         const { data: limitData, error: limitError } = await supabase.from('amount_limit').select('*').eq('user_id', userId).single();
 
@@ -90,24 +91,24 @@ exports.homedata = async (req, res) => {
             .from('transactions')
             .select('amount')
             .eq('user_id', userId)
-            .gte('created_at', startOfMonth.toISOString())
-            .lt('created_at', startOfNextMonth.toISOString());
+            .gte('date', startMonth.toISOString())
+            .lt('date', startNextMonth.toISOString());
 
         // Get daily transactions
         const { data: dailyTransactions, error: dailyError } = await supabase
             .from('transactions')
             .select('amount')
             .eq('user_id', userId)
-            .gte('created_at', startOfToday.toISOString())
-            .lt('created_at', startOfTomorrow.toISOString());
+            .gte('date', startToday.toISOString())
+            .lt('date', startTomorrow.toISOString());
 
         if (monthlyError || dailyError || limitError) {
             throw monthlyError || dailyError || limitError;
         }
 
         // Calculate sums client-side
-        const monthlySum = monthlyTransactions?.reduce((sum, transaction) => sum + parseFloat(transaction.amount || 0), 0) || 0;
-        const dailySum = dailyTransactions?.reduce((sum, transaction) => sum + parseFloat(transaction.amount || 0), 0) || 0;
+        const monthlySum = monthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
+        const dailySum = dailyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
 
         if (limitData) {
             let amt = limitData;

@@ -3,10 +3,9 @@ import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { InputText } from "primereact/inputtext";
 import { Formik, Form } from "formik";
-import { selectIsAuthenticated, selectIsLoading, selectError } from "./redux/authSlice";
+import { selectIsAuthenticated, selectIsLoading } from "./redux/authSlice";
 import { loginActions } from "./redux/authSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
-import { showToast } from "../../store/uiSlice";
 import { loginSchema } from "./services/schema";
 
 interface LoginValues {
@@ -19,7 +18,6 @@ const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const isAuthenticated = useAppSelector(selectIsAuthenticated);
     const isLoading = useAppSelector(selectIsLoading);
-    const error = useAppSelector(selectError);
 
     const initialValues: LoginValues = {
         username: '',
@@ -34,26 +32,10 @@ const LoginPage: React.FC = () => {
     useEffect(() => {
         if (isAuthenticated) {
             navigate('/');
-            dispatch(showToast({
-                severity: 'success',
-                summary: 'Success',
-                detail: 'Login successful',
-                life: 3000
-            }));
         }
     }, [isAuthenticated, navigate, dispatch]);
 
-    // Error Effect: Show toast on error
-    useEffect(() => {
-        if (error) {
-            dispatch(showToast({
-                severity: 'error',
-                summary: 'Error',
-                detail: error,
-                life: 3000
-            }));
-        }
-    }, [error, dispatch]);
+
 
     return (
         <Formik

@@ -28,7 +28,8 @@ export function createApiWorker<TPayload, TResponse>(
   actions: ApiActions<TPayload, TResponse>,
   apiCall: (payload: TPayload) => any,
   onSuccess?: (response: ApiResponse<TResponse>, payload: TPayload) => void,
-  afterSuccessAction?: () => PayloadAction<any>
+  afterSuccessAction?: () => PayloadAction<any>,
+  successToast?: string
 ) {
   return function* (action: PayloadAction<TPayload>): Generator {
     try {
@@ -36,7 +37,8 @@ export function createApiWorker<TPayload, TResponse>(
       
       if (response?.status) {
         // Send response.data to state (the actual data, not the wrapper)
-        yield put(actions.success((response.data ?? response) as TResponse))
+        // Pass the successToast in the meta property if it exists
+        yield put(actions.success((response.data ?? response) as TResponse, successToast ? { toast: successToast } : undefined))
         
         if(afterSuccessAction){
           yield put(afterSuccessAction())

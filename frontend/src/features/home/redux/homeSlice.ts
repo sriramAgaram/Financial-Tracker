@@ -9,7 +9,8 @@ interface HomeState {
   } | null
   expenseTypes: any[]
   isLoading: boolean
-  error: string | null
+  error: string | null,
+  deleteSuccess: boolean
 }
 
 
@@ -20,6 +21,7 @@ const initialState: HomeState = {
   expenseTypes: [],
   isLoading: false,
   error: null,
+  deleteSuccess: false
 }
 
 
@@ -28,7 +30,15 @@ const initialState: HomeState = {
 const homeSlice = createSlice({
   name: 'home',
   initialState,
-  reducers:{},
+  reducers: {
+    resetHome: (state) => {
+      state.dashboardData = null
+      state.expenseTypes = []
+      state.isLoading = false
+      state.error = null
+      state.deleteSuccess = false
+    }
+  },
   extraReducers: (builder) => {
     builder.addCase(homeDataActions.types.REQUEST, (state) => {
       state.isLoading = true
@@ -74,32 +84,40 @@ const homeSlice = createSlice({
     // Add Expense Type
     builder.addCase(addExpenseTypeActions.types.REQUEST, (state) => { state.isLoading = true })
     builder.addCase(addExpenseTypeActions.types.SUCCESS, (state) => { state.isLoading = false })
-    builder.addCase(addExpenseTypeActions.types.FAILURE, (state, action: PayloadAction<string>) => { 
+    builder.addCase(addExpenseTypeActions.types.FAILURE, (state, action: PayloadAction<string>) => {
       state.isLoading = false
-      state.error = action.payload 
+      state.error = action.payload
     })
 
     // Update Expense Type
     builder.addCase(updateExpenseTypeActions.types.REQUEST, (state) => { state.isLoading = true })
     builder.addCase(updateExpenseTypeActions.types.SUCCESS, (state) => { state.isLoading = false })
-    builder.addCase(updateExpenseTypeActions.types.FAILURE, (state, action: PayloadAction<string>) => { 
+    builder.addCase(updateExpenseTypeActions.types.FAILURE, (state, action: PayloadAction<string>) => {
       state.isLoading = false
-      state.error = action.payload 
+      state.error = action.payload
     })
 
     // Delete Expense Type
-    builder.addCase(deleteExpenseTypeActions.types.REQUEST, (state) => { state.isLoading = true })
-    builder.addCase(deleteExpenseTypeActions.types.SUCCESS, (state) => { state.isLoading = false })
-    builder.addCase(deleteExpenseTypeActions.types.FAILURE, (state, action: PayloadAction<string>) => { 
+    builder.addCase(deleteExpenseTypeActions.types.REQUEST, (state) => {
+      state.isLoading = true
+      state.deleteSuccess = false
+      state.error = null
+    })
+    builder.addCase(deleteExpenseTypeActions.types.SUCCESS, (state) => {
       state.isLoading = false
-      state.error = action.payload 
+      state.deleteSuccess = true
+    })
+    builder.addCase(deleteExpenseTypeActions.types.FAILURE, (state, action: PayloadAction<string>) => {
+      state.isLoading = false
+      state.error = action.payload
+      state.deleteSuccess = false
     })
   }
 })
 
 // Export actions
 export const {
-
+  resetHome
 } = homeSlice.actions
 
 // Export reducer
@@ -111,3 +129,5 @@ export const selectDashboardData = (state: { home: HomeState }) => state.home.da
 export const selectIsLoading = (state: { home: HomeState }) => state.home.isLoading
 export const selectError = (state: { home: HomeState }) => state.home.error
 export const selectExpenseTypes = (state: { home: HomeState }) => state.home.expenseTypes
+export const deleteSuccess = (state: { home: HomeState }) => state.home.deleteSuccess
+

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from "primereact/button";
 import { useDispatch } from "react-redux";
@@ -7,8 +7,7 @@ import { SettingDialog } from "./dialog.setting.component";
 import { confirmDialog } from 'primereact/confirmdialog';
 import { InputText } from "primereact/inputtext";
 import { useExpenseTypes } from "../../../hooks/useExpenseTypes";
-import { showToast } from "../../../store/uiSlice";
-
+import { resetHome } from "../../home/redux/homeSlice";
 
 export default function DropdownSettingComponent() {
     const [data, setData] = useState('');
@@ -17,6 +16,15 @@ export default function DropdownSettingComponent() {
     const [visible, setVisible] = useState(false)
     const expenstTypeOptions = useExpenseTypes();
     const dispatch = useDispatch();
+
+
+
+    useEffect(() => {
+        dispatch(resetHome());
+        return () => {
+            dispatch(resetHome());
+        }
+    }, [dispatch])
 
 
 
@@ -35,25 +43,14 @@ export default function DropdownSettingComponent() {
             acceptClassName: 'p-button-danger',
             accept: () => dispatch(deleteExpenseTypeActions.request(option.expense_type_id))
         });
-         dispatch(showToast({
-                severity:'success',
-                summary: 'Success',
-                detail: 'Delete Success !',
-                life: 3000
-              }))
+
     }
 
     const handleAdd = (e: React.FormEvent) => {
         e.preventDefault()
         if (!addName.trim()) return;
         dispatch(addExpenseTypeActions.request({ expense_name: addName }))
-        setAddName(''); 
-         dispatch(showToast({
-                severity:'success',
-                summary: 'Success',
-                detail: 'Category Added',
-                life: 3000
-              }))
+        setAddName('');
     }
 
 

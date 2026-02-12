@@ -7,6 +7,7 @@ import listReducer from '../features/list/redux/listSlice'
 import settingsReducer from '../features/settings/redux/settingsSlice'
 import uiReducer from './uiSlice'
 import dashboardReducer from '../features/Dashboard/redux/dashboard.slice'
+import { toastMiddleware } from './toastMiddleware'
 
 // Create the saga middleware
 const sagaMiddleware = createSagaMiddleware()
@@ -26,7 +27,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST'],
       },
-    }).concat(sagaMiddleware),
+    }).concat(sagaMiddleware, toastMiddleware),
 })
 
 // Run the root saga

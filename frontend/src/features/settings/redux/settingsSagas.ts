@@ -27,7 +27,7 @@ const updateLimitApi = async (payload: UpdateLimitPayload) => {
 
 
 const fetchLimitWorker = createApiWorker(LimitFetchActions, fetchLimitApi)
-const updateLimitWorker = createApiWorker(settingsUpdateActions, updateLimitApi, undefined, () => LimitFetchActions.request())
+const updateLimitWorker = createApiWorker(settingsUpdateActions, updateLimitApi, undefined, () => LimitFetchActions.request(), 'Limit Updated')
 
 function* settingsWatcher() {
   yield takeEvery(LimitFetchActions.types.REQUEST, fetchLimitWorker)
