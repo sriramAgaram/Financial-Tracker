@@ -7,8 +7,6 @@ import { useAppSelector } from "../../hooks/useAppSelector";
 import { selectUserSettings } from "./redux/settingsSlice";
 import { Button } from "primereact/button";
 import DropdownSettingComponent from "./components/dropdown.setting.component";
-import { showToast } from "../../store/uiSlice";
-
 const SettingsPage = () => {
   const dispatch = useDispatch();
   const userSettings = useAppSelector(selectUserSettings);

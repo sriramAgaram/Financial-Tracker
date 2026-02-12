@@ -6,7 +6,6 @@ import { InputText } from "primereact/inputtext";
 import { FloatLabel } from "primereact/floatlabel";
 import { useDispatch } from "react-redux";
 import { updateExpenseTypeActions } from "../../home/redux/homeSagas";
-import { showToast } from "../../../store/uiSlice";
 
 
 export const SettingDialog = ({ visible, data, setvisible }: { visible: boolean, data: any, setvisible: (visible: boolean) => void }) => {
