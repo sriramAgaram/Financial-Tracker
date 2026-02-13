@@ -21,7 +21,8 @@ exports.signup = async (req, res, next) => {
         await supabase.from('amount_limit').insert([{
             user_id: data.user_id,
             monthly_limit: 1000,
-            daily_limit: 100
+            daily_limit: 100,
+            overall_amount: 1000
         }]);
 
         await supabase.from('expense_type').insert([{
