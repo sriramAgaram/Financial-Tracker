@@ -17,6 +17,9 @@ const DashboardPage = () => {
 
     const ChartData = weeklyData?.chartData || [];
     const Labels = weeklyData?.labels || [];
+    const overExpenseChartData = weeklyData?.overExpenseChartData || [];
+    const overExpenseLabels = weeklyData?.overExpenseLabels || [];
+
 
 
     return (
@@ -24,6 +27,8 @@ const DashboardPage = () => {
                 <Barchart 
                     chartData={ChartData} 
                     labels={Labels}
+                    overExpenseChartData={overExpenseChartData}
+                    overExpenseLabels = {overExpenseLabels}
                 />
         </div>
     );

@@ -5,10 +5,12 @@ import { Chart } from 'primereact/chart';
 
 interface ChartProps {
     chartData: number[]; 
-    labels: string[];   
+    labels: string[];  
+    overExpenseChartData: number[]; 
+    overExpenseLabels: string[];
 }
 
-export default function Barchart({ chartData, labels }: ChartProps) {
+export default function Barchart({ chartData, labels , overExpenseChartData, overExpenseLabels}: ChartProps) {
     const [chartDataState, setChartDataState] = useState({});
     const [chartOptions, setChartOptions] = useState({});
 
@@ -30,12 +32,15 @@ export default function Barchart({ chartData, labels }: ChartProps) {
                 },
                 {
                     type: 'line',
-                    label: 'Expense',
-                    backgroundColor: documentStyle.getPropertyValue('--blue-500'),
-                    data: chartData,
-                    tension: 0.4,
+                    label: 'Over Limit',
+                    borderColor: documentStyle.getPropertyValue('--blue-500'),
+                    pointBackgroundColor: documentStyle.getPropertyValue('--blue-500'),
+                    pointBorderColor: documentStyle.getPropertyValue('--blue-500'),
+                    pointRadius: 5,
+                    borderWidth: 2,
                     fill: false,
-                    borderWidth: 2
+                    tension: 0.4,
+                    data: overExpenseChartData
                 }
             ]
         };

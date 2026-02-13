@@ -5,7 +5,8 @@ import { LimitFetchActions, settingsUpdateActions } from './settingsSagas'
 interface UserSettings {
   limit_id: number | null
   daily_limit: number
-  monthly_limit: number
+  monthly_limit: number,
+  overall_amount: number
 }
 
 interface SettingsState {
@@ -20,6 +21,7 @@ const initialState: SettingsState = {
     limit_id: null,
     monthly_limit: 1000,
     daily_limit: 100,
+    overall_amount:1000
   },
   isLoading: false,
   error: null,

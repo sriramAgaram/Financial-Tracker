@@ -7,7 +7,8 @@ interface HomeState {
     balanceDailyAmt: 0,
     balanceMonthlyAmt: 0,
     dailyLimit:0,
-    monthlyLimit:0
+    monthlyLimit:0,
+    balanceOverallAmt: 0
   } | null
   expenseTypes: any[]
   isLoading: boolean

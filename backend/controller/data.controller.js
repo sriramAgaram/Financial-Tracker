@@ -17,7 +17,7 @@ exports.getSettingsData = async (req, res) => {
         // Get limits data for the user
         const { data: limitsData, error: limitsError } = await supabase
             .from('amount_limit')
-            .select('limit_id, user_id, monthly_limit, daily_limit, created_at, updated_at')
+            .select('limit_id, user_id, monthly_limit, daily_limit, overall_amount, created_at, updated_at')
             .eq('user_id', userId);
 
         if (limitsError) {
@@ -116,11 +116,13 @@ exports.homedata = async (req, res) => {
             let currentDailyExpense = dailySum;
             let balanceMonthlyAmt = amt.monthly_limit - currentExpense;
             let balanceDailyAmt = amt.daily_limit - currentDailyExpense;
+            let balanceOverallAmt = amt.overall_amount - currentExpense;
+
 
             res.status(200).json({
                 status: true,
                 msg: 'Data Fetched Successfully',
-                data: { balanceDailyAmt, balanceMonthlyAmt, dailyLimit: amt.daily_limit, monthlyLimit: amt.monthly_limit }
+                data: { balanceDailyAmt, balanceMonthlyAmt, dailyLimit: amt.daily_limit, monthlyLimit: amt.monthly_limit, balanceOverallAmt}
             });
         } else {
             res.status(404).json({ status: false, msg: 'Limit data not found' });

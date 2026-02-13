@@ -14,7 +14,9 @@ export interface WeeklyDataResponse {
     chartData: number[]; // [12, 10, 3, 5, 2, 3, 10]
     labels: string[];     // ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     totalAmount: number;
-}
+    overExpenseChartData: number[];
+    overExpenseLabels: string[];
+    }
 
 // 1. Define Actions
 export const weeklyDataActions = createApiActions<WeeklyDataPayload, WeeklyDataResponse>('dashboard/weeklyData');

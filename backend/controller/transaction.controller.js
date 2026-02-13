@@ -210,6 +210,14 @@ exports.weeklyData = async (req, res) => {
             p_to_date: toDate
         });
 
+        const { data: limitData, error: limitError } = await supabase.from('amount_limit').select('daily_limit').eq('user_id', req.user.userId).single();
+        console.log(limitData)
+
+
+        if(limitError){
+            return res.status(400).json({limitError: limitError.message})
+        }
+
         if (error) {
             return res.status(400).json({ error: error.message });
         }
@@ -217,11 +225,19 @@ exports.weeklyData = async (req, res) => {
         // Extract arrays for chart
         const chartData = data.map(day => day.total_amount);
         const labels = data.map(day => day.transaction_date);
+
+        const overExpenseChartData = data.map(day => 
+            (limitData && day.total_amount > limitData.daily_limit) ? day.total_amount : null
+        );
+        const overExpenseLabels = data.map(day => day.transaction_date);
+
         const totalAmount = chartData.reduce((sum, val) => sum + val, 0);
 
         return res.status(200).json({
             status: true,
             msg: "Transaction Fetched successfully",
+            overExpenseChartData,
+            overExpenseLabels,
             chartData,      
             labels,      
             totalAmount

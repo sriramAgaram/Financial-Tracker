@@ -7,29 +7,39 @@ import { useAppSelector } from "../../hooks/useAppSelector";
 import { selectUserSettings } from "./redux/settingsSlice";
 import { Button } from "primereact/button";
 import DropdownSettingComponent from "./components/dropdown.setting.component";
+import { useFormik } from "formik";
+import { settingsSchema } from "./services/schema";
+
 const SettingsPage = () => {
   const dispatch = useDispatch();
   const userSettings = useAppSelector(selectUserSettings);
-  const { monthly_limit = 0, daily_limit = 0, limit_id = 0 } = userSettings || {};
+  const { monthly_limit = 0, daily_limit = 0, limit_id = 0, overall_amount = 0 } = userSettings || {};
 
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    daily_limit: 0,
-    monthly_limit: 0,
-  });
 
   useEffect(() => {
     dispatch(LimitFetchActions.request());
   }, []);
 
-  useEffect(() => {
-    if (userSettings) {
-      setFormData({
-        daily_limit: daily_limit,
-        monthly_limit: monthly_limit,
-      });
+  const formik = useFormik({
+    initialValues: {
+      daily_limit: daily_limit || 0,
+      monthly_limit: monthly_limit || 0,
+      overall_amount: overall_amount || 0,
+    },
+    enableReinitialize: true,
+    validationSchema: settingsSchema,
+    onSubmit: (values) => {
+      if (!limit_id) return;
+      dispatch(settingsUpdateActions.request({
+        id: limit_id,
+        daily_limit: values.daily_limit,
+        monthly_limit: values.monthly_limit,
+        overall_amount: values.overall_amount
+      }));
+      setIsEditing(false);
     }
-  }, [userSettings, daily_limit, monthly_limit]);
+  });
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -37,27 +47,13 @@ const SettingsPage = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    setFormData({
-      daily_limit: daily_limit,
-      monthly_limit: monthly_limit,
-    });
+    formik.resetForm();
   };
 
-  const handleSave = () => {
-    if (!limit_id) return;
-    dispatch(settingsUpdateActions.request({
-      id: limit_id,
-      daily_limit: formData.daily_limit,
-      monthly_limit: formData.monthly_limit,
-    }));
-    setIsEditing(false);
-  };
+  const isFormFieldInvalid = (name: "daily_limit" | "monthly_limit" | "overall_amount") => !!(formik.touched[name] && formik.errors[name]);
 
-  const handleChange = (field: string, value: number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const getFormErrorMessage = (name: "daily_limit" | "monthly_limit" | "overall_amount") => {
+    return isFormFieldInvalid(name) ? <small className="p-error block text-red-500 mt-1">{formik.errors[name]}</small> : <small className="p-error block">&nbsp;</small>;
   };
 
   return (
@@ -91,58 +87,82 @@ const SettingsPage = () => {
           </div>
 
           {/* Card Body */}
-          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-            {/* Daily Limit Card */}
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 md:p-5 border border-emerald-100/50">
-              <FloatLabel>
-                <InputText
-                  id="daily_limit"
-                  value={formData.daily_limit.toString()}
-                  onChange={(e) => handleChange('daily_limit', Number(e.target.value))}
-                  className="w-full text-xl md:text-2xl font-bold bg-transparent border-emerald-200 focus:border-emerald-500 focus:shadow-emerald-100"
-                  keyfilter="num"
-                  readOnly={!isEditing}
-                />
-                <label htmlFor="daily_limit" className="text-emerald-700">Daily Amount (₹)</label>
-              </FloatLabel>
-            </div>
+          <form onSubmit={formik.handleSubmit}>
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+              {/* Daily Limit Card */}
+              <div className={`bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 md:p-5 border ${isFormFieldInvalid('daily_limit') ? 'border-red-300' : 'border-emerald-100/50'}`}>
+                <FloatLabel>
+                  <InputText
+                    id="daily_limit"
+                    name="daily_limit"
+                    value={formik.values.daily_limit.toString()}
+                    onChange={formik.handleChange}
+                    className={`w-full text-xl md:text-2xl font-bold bg-transparent border-emerald-200 focus:border-emerald-500 focus:shadow-emerald-100 ${isFormFieldInvalid('daily_limit') ? 'p-invalid' : ''}`}
+                    keyfilter="num"
+                    readOnly={!isEditing}
+                  />
+                  <label htmlFor="daily_limit" className="text-emerald-700">Daily Amount (₹)</label>
+                </FloatLabel>
+                {getFormErrorMessage('daily_limit')}
+              </div>
 
-            {/* Monthly Limit Card */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 md:p-5 border border-blue-100/50">
-              <FloatLabel>
-                <InputText
-                  id="monthly_limit"
-                  value={formData.monthly_limit.toString()}
-                  onChange={(e) => handleChange('monthly_limit', Number(e.target.value))}
-                  className="w-full text-xl md:text-2xl font-bold bg-transparent border-blue-200 focus:border-blue-500 focus:shadow-blue-100"
-                  keyfilter="num"
-                  readOnly={!isEditing}
-                />
-                <label htmlFor="monthly_limit" className="text-blue-700">Monthly Amount (₹)</label>
-              </FloatLabel>
-            </div>
-          </div>
+              {/* Monthly Limit Card */}
+              <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 md:p-5 border ${isFormFieldInvalid('monthly_limit') ? 'border-red-300' : 'border-blue-100/50'}`}>
+                <FloatLabel>
+                  <InputText
+                    id="monthly_limit"
+                    name="monthly_limit"
+                    value={formik.values.monthly_limit.toString()}
+                    onChange={formik.handleChange}
+                    className={`w-full text-xl md:text-2xl font-bold bg-transparent border-blue-200 focus:border-blue-500 focus:shadow-blue-100 ${isFormFieldInvalid('monthly_limit') ? 'p-invalid' : ''}`}
+                    keyfilter="num"
+                    readOnly={!isEditing}
+                  />
+                  <label htmlFor="monthly_limit" className="text-blue-700">Monthly Amount (₹)</label>
+                </FloatLabel>
+                {getFormErrorMessage('monthly_limit')}
+              </div>
 
-
-          {/* Action Buttons */}
-          {isEditing && (
-            <div className="px-4 pb-4 md:px-6 md:pb-6">
-              <div className="flex gap-3">
-                <Button
-                  label="Save"
-                  icon="pi pi-check"
-                  className="flex-1 p-button-success py-2 md:py-3"
-                  onClick={handleSave}
-                />
-                <Button
-                  label="Cancel"
-                  icon="pi pi-times"
-                  className="flex-1 p-button-secondary p-button-outlined py-2 md:py-3"
-                  onClick={handleCancel}
-                />
+              {/* Overall Amount Card */}
+              <div className={`bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-xl p-4 md:p-5 border ${isFormFieldInvalid('overall_amount') ? 'border-red-300' : 'border-purple-100/50'}`}>
+                <FloatLabel>
+                  <InputText
+                    id="overall_amount"
+                    name="overall_amount"
+                    value={formik.values.overall_amount.toString()}
+                    onChange={formik.handleChange}
+                    className={`w-full text-xl md:text-2xl font-bold bg-transparent border-purple-200 focus:border-purple-500 focus:shadow-purple-100 ${isFormFieldInvalid('overall_amount') ? 'p-invalid' : ''}`}
+                    keyfilter="num"
+                    readOnly={!isEditing}
+                  />
+                  <label htmlFor="overall_amount" className="text-purple-700">Overall Amount (₹)</label>
+                </FloatLabel>
+                {getFormErrorMessage('overall_amount')}
               </div>
             </div>
-          )}
+
+
+            {/* Action Buttons */}
+            {isEditing && (
+              <div className="px-4 pb-4 md:px-6 md:pb-6">
+                <div className="flex gap-3">
+                  <Button
+                    label="Save"
+                    icon="pi pi-check"
+                    className="flex-1 p-button-success py-2 md:py-3"
+                    type="submit"
+                  />
+                  <Button
+                    label="Cancel"
+                    icon="pi pi-times"
+                    className="flex-1 p-button-secondary p-button-outlined py-2 md:py-3"
+                    onClick={handleCancel}
+                    type="button"
+                  />
+                </div>
+              </div>
+            )}
+          </form>
         </div>
       </div>
 

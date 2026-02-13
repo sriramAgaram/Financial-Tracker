@@ -79,7 +79,7 @@ const HomePage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-default">
-          <h2 className="text-lg font-semibold text-heading mb-2">Total Balance</h2>
+          <h2 className="text-lg font-semibold text-heading mb-2">Daily Expenses</h2>
           <p className="text-3xl font-bold text-fg-brand">₹{amountData?.balanceDailyAmt}</p>
         </div>
 
@@ -89,8 +89,8 @@ const HomePage: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-default">
-          <h2 className="text-lg font-semibold text-heading mb-2">Savings</h2>
-          <p className="text-3xl font-bold text-fg-success">₹0.00</p>
+          <h2 className="text-lg font-semibold text-heading mb-2">Total Balance</h2>
+          <p className="text-3xl font-bold text-fg-success">₹{amountData?.balanceOverallAmt}</p>
         </div>
       </div>
 

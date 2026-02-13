@@ -5,7 +5,8 @@ import { createApiWorker } from '../../../store/utils/apiWorker'
 
 interface UpdateLimitPayload {
   daily_limit: number
-  monthly_limit: number
+  monthly_limit: number,
+  overall_amount: number
   id: number
 }
 
