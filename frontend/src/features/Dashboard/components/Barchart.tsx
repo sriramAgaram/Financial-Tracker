@@ -10,7 +10,7 @@ interface ChartProps {
     overExpenseLabels: string[];
 }
 
-export default function Barchart({ chartData, labels , overExpenseChartData, overExpenseLabels}: ChartProps) {
+export default function Barchart({ chartData, labels , overExpenseChartData}: ChartProps) {
     const [chartDataState, setChartDataState] = useState({});
     const [chartOptions, setChartOptions] = useState({});
 
