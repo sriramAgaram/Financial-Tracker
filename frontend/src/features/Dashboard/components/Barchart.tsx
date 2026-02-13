@@ -40,7 +40,8 @@ export default function Barchart({ chartData, labels , overExpenseChartData}: Ch
                     borderWidth: 2,
                     fill: false,
                     tension: 0.4,
-                    data: overExpenseChartData
+                    data: overExpenseChartData,
+                    spanGaps: true
                 }
             ]
         };
