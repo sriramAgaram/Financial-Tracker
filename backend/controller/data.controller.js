@@ -116,7 +116,7 @@ exports.homedata = async (req, res) => {
             let currentDailyExpense = dailySum;
             let balanceMonthlyAmt = amt.monthly_limit - currentExpense;
             let balanceDailyAmt = amt.daily_limit - currentDailyExpense;
-            let balanceOverallAmt = amt.overall_amount - currentExpense;
+            let balanceOverallAmt = amt.overall_amount - monthlySum;
 
 
             res.status(200).json({
