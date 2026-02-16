@@ -90,12 +90,18 @@ exports.lists = async (req, res) => {
 
         let query = supabase
             .from('transactions')
-            .select(`*, 
+            .select(`
+                transaction_id,
+                amount,
+                date,
+                description,
+                expense_type_id,
+                user_id,
                 expense_type(
-                expense_name
-                )`, { count: 'exact' }
-            )
-            .eq('user_id' , req.user.userId)
+                    expense_name
+                )
+            `, { count: 'estimated' })
+            .eq('user_id', req.user.userId)
             
         if(category && category.length > 0){
             query = query.in('expense_type_id', category)
