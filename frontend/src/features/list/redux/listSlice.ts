@@ -7,9 +7,6 @@ interface  ResponseOfTransaction{
   expense_type_id: number,
   amount: number,
   created_at: string
-  expense_type: {
-    expense_name: string
-  }
 }
 
 interface ListState {

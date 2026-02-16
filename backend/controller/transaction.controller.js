@@ -96,12 +96,11 @@ exports.lists = async (req, res) => {
                 date,
                 description,
                 expense_type_id,
-                user_id,
-                expense_type(
-                    expense_name
-                )
+                user_id
             `, { count: 'estimated' })
+            
             .eq('user_id', req.user.userId)
+            
             
         if(category && category.length > 0){
             query = query.in('expense_type_id', category)

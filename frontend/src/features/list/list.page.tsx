@@ -140,7 +140,8 @@ const ListPage = () => {
 
           <div className="space-y-4">
             {transactions?.map((item: any) => {
-              const expenseName = item.expense_type?.expense_name || 'Unknown';
+              const expenseType = expenseTypes.find((type: any) => type.expense_type_id === item.expense_type_id);
+              const expenseName = expenseType ? expenseType.expense_name : 'Unknown';
               const date = item.date ? format(new Date(item.date), 'dd MMM, hh:mm a') : '';
               const initial = expenseName.charAt(0).toUpperCase();
 
@@ -183,7 +184,7 @@ const ListPage = () => {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     confirmDialog({
-                                        message: `Are you sure you want to edit ${item.expense_type?.expense_name}?`,
+                                        message: `Are you sure you want to edit ${expenseName}?`,
                                         header: 'Edit Confirmation',
                                         icon: 'pi pi-exclamation-triangle',
                                         acceptClassName: 'p-button-warning',
