@@ -161,6 +161,7 @@ exports.lists = async (req, res) => {
 //             error: error.message
 //         });
 //     }
+//     }
 // }
 
 exports.delete = async (req, res) => {
