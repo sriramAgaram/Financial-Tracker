@@ -94,7 +94,6 @@ exports.lists = async (req, res) => {
                 transaction_id,
                 amount,
                 date,
-                description,
                 expense_type_id,
                 user_id
             `, { count: 'estimated' })
