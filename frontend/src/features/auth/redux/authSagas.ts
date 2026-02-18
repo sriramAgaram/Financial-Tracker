@@ -24,40 +24,79 @@ interface LoginResponse {
   token: string
 }
 
-interface SignupPayload {
+// Step 1: Initiate
+interface InitiateSignupPayload {
   username: string
-  password: string
   name: string
+  email: string
 }
 
-interface SignupResponse {
+interface InitiateSignupResponse {
+  status: boolean
+  msg: string
+}
+
+// Step 2: Verify
+interface VerifyOtpPayload {
+  email: string
+  otp: string
+}
+
+interface VerifyOtpResponse {
+  status: boolean
+  msg: string
+  signupToken: string
+}
+
+// Step 3: Complete
+interface CompleteSignupPayload {
+  signupToken: string
+  password: string
+  confirmPassword: string
+}
+
+interface CompleteSignupResponse {
   status: boolean
   msg: string
   data: any
 }
 
 // ============================================
-// ACTION FACTORIES (One line creates 3 actions!)
+// ACTION FACTORIES
 // ============================================
 export const loginActions = createApiActions<LoginPayload, LoginResponse>('auth/login')
-export const signupActions = createApiActions<SignupPayload, SignupResponse>('auth/signup')
 export const logoutActions = createApiActions<void, void>('auth/logout')
 
+// 3-Step Signup Actions
+export const initiateSignupActions = createApiActions<InitiateSignupPayload, InitiateSignupResponse>('auth/signup/initiate')
+export const verifyOtpActions = createApiActions<VerifyOtpPayload, VerifyOtpResponse>('auth/signup/verify')
+export const completeSignupActions = createApiActions<CompleteSignupPayload, CompleteSignupResponse>('auth/signup/complete')
+
 // ============================================
-// API CALLS (Now using apiClient)
+// API CALLS
 // ============================================
 const loginApiCall = async (payload: LoginPayload): Promise<ApiResponse<LoginResponse>> => {
   const response = await apiClient.post('/auth/login', payload)
   return response.data
 }
 
-const signupApiCall = async (payload: SignupPayload): Promise<ApiResponse<SignupResponse>> => {
-  const response = await apiClient.post('/auth/signup', payload)
+const initiateSignupApiCall = async (payload: InitiateSignupPayload): Promise<ApiResponse<InitiateSignupResponse>> => {
+  const response = await apiClient.post('/auth/signup/initiate', payload)
+  return response.data
+}
+
+const verifyOtpApiCall = async (payload: VerifyOtpPayload): Promise<ApiResponse<VerifyOtpResponse>> => {
+  const response = await apiClient.post('/auth/signup/verify', payload)
+  return response.data
+}
+
+const completeSignupApiCall = async (payload: CompleteSignupPayload): Promise<ApiResponse<CompleteSignupResponse>> => {
+  const response = await apiClient.post('/auth/signup/complete', payload)
   return response.data
 }
 
 // ============================================
-// WORKER SAGAS (Created by factory - ONE LINE each!)
+// WORKER SAGAS
 // ============================================
 const loginWorker = createApiWorker(loginActions, loginApiCall, (response) => {
   if (response.token) {
@@ -65,14 +104,18 @@ const loginWorker = createApiWorker(loginActions, loginApiCall, (response) => {
   }
 },undefined,'Login Successful')
 
-const signupWorker = createApiWorker(signupActions, signupApiCall,undefined,undefined,'Signup Successful')
+const initiateSignupWorker = createApiWorker(initiateSignupActions, initiateSignupApiCall, undefined, undefined, 'OTP Sent Successfully')
+const verifyOtpWorker = createApiWorker(verifyOtpActions, verifyOtpApiCall, undefined, undefined, 'OTP Verified')
+const completeSignupWorker = createApiWorker(completeSignupActions, completeSignupApiCall, undefined, undefined, 'Signup Completed')
 
 // ============================================
 // WATCHER SAGA
 // ============================================
 function* authWatcher(): Generator {
   yield takeEvery(loginActions.types.REQUEST, loginWorker)
-  yield takeEvery(signupActions.types.REQUEST, signupWorker)
+  yield takeEvery(initiateSignupActions.types.REQUEST, initiateSignupWorker)
+  yield takeEvery(verifyOtpActions.types.REQUEST, verifyOtpWorker)
+  yield takeEvery(completeSignupActions.types.REQUEST, completeSignupWorker)
 }
 
 export default authWatcher

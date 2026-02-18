@@ -8,8 +8,10 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "lodash": "^4.17.21",
+    "nodemailer": "^8.0.1",
     "qeasy": "^1.0.5"
   },
+  "type": "commonjs",
   "name": "ft",
   "version": "1.0.0",
   "main": "server.js",
