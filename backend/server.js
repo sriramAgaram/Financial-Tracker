@@ -7,6 +7,7 @@ const expencestypeRoute = require('./router/expencestype.route');
 const transactionRoute = require('./router/transaction.route');
 const limitRoute = require('./router/limit.route');
 const dataRoute = require('./router/data.route');
+const cronRoute = require('./router/cron.route');
 
 app.use(cors());
 dotenv.config();
@@ -19,6 +20,7 @@ app.use('/expencestype', expencestypeRoute);
 app.use('/transaction', transactionRoute);
 app.use('/limit', limitRoute);
 app.use('/data', dataRoute);
+app.use('/cron', cronRoute);
 
 
 app.post("/signup", (req, res)=>{
