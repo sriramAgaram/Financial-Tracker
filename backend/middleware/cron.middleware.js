@@ -1,3 +1,6 @@
+const dontenv = require('dotenv');
+dontenv.config();
+
 const cronMiddleware = (req, res, next) => {
     const cronKey = req.headers['x-cron-api-key'] || req.query.key;
     
