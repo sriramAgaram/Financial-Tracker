@@ -7,6 +7,7 @@ import listReducer from '../features/list/redux/listSlice'
 import settingsReducer from '../features/settings/redux/settingsSlice'
 import uiReducer from './uiSlice'
 import dashboardReducer from '../features/Dashboard/redux/dashboard.slice'
+import profileReducer from '../features/profile/redux/profileSlice'
 import { toastMiddleware } from './toastMiddleware'
 
 // Create the saga middleware
@@ -21,6 +22,7 @@ export const store = configureStore({
     settings: settingsReducer,
     ui: uiReducer,
     dashboard: dashboardReducer,
+    profile: profileReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -8,6 +8,7 @@ const transactionRoute = require('./router/transaction.route');
 const limitRoute = require('./router/limit.route');
 const dataRoute = require('./router/data.route');
 const cronRoute = require('./router/cron.route');
+const userRoute = require('./router/user.route');
 
 app.use(cors());
 dotenv.config();
@@ -21,6 +22,7 @@ app.use('/transaction', transactionRoute);
 app.use('/limit', limitRoute);
 app.use('/data', dataRoute);
 app.use('/cron', cronRoute);
+app.use('/user', userRoute);
 
 
 app.post("/signup", (req, res)=>{

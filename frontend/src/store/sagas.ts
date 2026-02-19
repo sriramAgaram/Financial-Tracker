@@ -4,6 +4,7 @@ import homeSagas from '../features/home/redux/homeSagas'
 import listSagas from '../features/list/redux/listSagas'
 import settingsSagas from '../features/settings/redux/settingsSagas'
 import dashboardSaga from '../features/Dashboard/redux/dashboard.saga'
+import profileSaga from '../features/profile/redux/profileSagas'
 
 // Root saga that combines all feature sagas
 function* rootSaga(): Generator {
@@ -13,6 +14,7 @@ function* rootSaga(): Generator {
     fork(listSagas),
     fork(settingsSagas),
     fork(dashboardSaga),
+    fork(profileSaga),
   ])
 }
 

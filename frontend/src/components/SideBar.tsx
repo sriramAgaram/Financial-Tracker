@@ -39,6 +39,12 @@ const SideBar = ({ isMobileOpen, onClose }: SideBarProps) => {
                             </Link>
                         </li>
                         <li>
+                            <Link to='/profile' onClick={handleLinkClick} className="flex items-center px-4 py-3 text-body rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                                <svg className="shrink-0 w-5 h-5 transition duration-75 group-hover:text-indigo-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 6a3 3 0 0 0-3 3h6a3 3 0 0 0-3-3Z" /></svg>
+                                <span className="flex-1 ms-3 whitespace-nowrap font-medium">Profile</span>
+                            </Link>
+                        </li>
+                        <li>
                             <Link to='/settings' onClick={handleLinkClick} className="flex items-center px-4 py-3 text-body rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
                                 <svg className="shrink-0 w-5 h-5 transition duration-75 group-hover:text-indigo-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v14M9 5v14M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></svg>
                                 <span className="flex-1 ms-3 whitespace-nowrap font-medium">Settings</span>
