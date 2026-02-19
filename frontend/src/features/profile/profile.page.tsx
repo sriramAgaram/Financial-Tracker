@@ -6,7 +6,7 @@ import { Dialog } from 'primereact/dialog';
 import { FloatLabel } from 'primereact/floatlabel';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { resetOtpStatus, selectProfileData, selectProfileLoading, selectIsOtpSent } from './redux/profileSlice';
+import {  selectProfileData, selectProfileLoading } from './redux/profileSlice';
 import { getProfileActions, sendOtpActions, updateProfileActions, verifyEmailActions } from './redux/profileSagas';
 import { useAppSelector } from '../../hooks/useAppSelector';
 
@@ -14,8 +14,6 @@ const ProfilePage = () => {
     const dispatch = useDispatch();
     const profile = useAppSelector(selectProfileData);
     const isLoading = useAppSelector(selectProfileLoading);
-    const isOtpSent = useAppSelector(selectIsOtpSent);
-
     const [isEditing, setIsEditing] = useState(false);
     const [showOtpDialog, setShowOtpDialog] = useState(false);
     const [otp, setOtp] = useState('');
