@@ -70,7 +70,7 @@ exports.sendVerificationOtp = async (req, res) => {
         const userId = req.user.userId;
         const { email, name, username } = req.body;
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
         // Store name, username, email and otp in temp_registrations
         const { error: tempError } = await supabase.from('temp_registrations').upsert({

@@ -39,7 +39,7 @@ interface InitiateSignupResponse {
 // Step 2: Verify
 interface VerifyOtpPayload {
   email: string
-  otp: string
+  otp: number
 }
 
 interface VerifyOtpResponse {

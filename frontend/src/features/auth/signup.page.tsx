@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Formik, Form } from "formik";
 import { InputText } from "primereact/inputtext";
+import { InputOtp } from "primereact/inputotp";
 import { 
     selectSignupSuccess, 
     selectIsLoading, 
@@ -24,7 +25,7 @@ const initiateSchema = Yup.object().shape({
 });
 
 const verifySchema = Yup.object().shape({
-    otp: Yup.string().required('OTP is required').length(6, 'OTP must be 6 digits'),
+    otp: Yup.string().required('OTP is required').length(4, 'OTP must be 4 digits'),
 });
 
 const completeSchema = Yup.object().shape({
@@ -60,7 +61,7 @@ const SignUpPage: React.FC = () => {
     // Step 2: Verify
     const handleVerify = (values: { otp: string }) => {
         if (!signupEmail) return;
-        dispatch(verifyOtpActions.request({ email: signupEmail, otp: values.otp }));
+        dispatch(verifyOtpActions.request({ email: signupEmail, otp: Number.parseInt(values.otp) }));
     };
 
     // Step 3: Complete
@@ -134,13 +135,22 @@ const SignUpPage: React.FC = () => {
                         validationSchema={verifySchema}
                         onSubmit={handleVerify}
                     >
-                        {({ values, errors, touched, handleChange, handleBlur }) => (
-                            <Form className="flex flex-col gap-6">
+                        {({ values, errors, touched, setFieldValue }) => (
+                            <Form className="flex flex-col gap-6 text-center">
                                 <div>
-                                    <span className="p-float-label w-full block">
-                                        <InputText name="otp" value={values.otp} onChange={handleChange} onBlur={handleBlur} className={errors.otp && touched.otp ? 'p-invalid w-full' : 'w-full'} />
-                                        <label htmlFor="otp">OTP Code</label>
-                                    </span>
+                                    <div className="flex justify-center mb-4">
+                                        <InputOtp 
+                                            name="otp" 
+                                            value={values.otp} 
+                                            onChange={(e) => {
+                                                const val = e.value?.toString() || '';
+                                                setFieldValue('otp', val);
+                                            }} 
+                                            length={4} 
+                                            integerOnly
+                                            className={errors.otp && touched.otp ? 'p-invalid' : ''}
+                                        />
+                                    </div>
                                     {errors.otp && touched.otp && <small className="text-red-500 text-xs mt-1 block">{errors.otp}</small>}
                                 </div>
                                 <button type="submit" disabled={isLoading} className="w-full bg-linear-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50">

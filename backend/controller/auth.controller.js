@@ -14,7 +14,7 @@ exports.initiateSignup = async (req, res, next) => {
         }
 
         // 2. Generate OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = Math.floor(1000 + Math.random() * 9000);
 
         // 3. Store in temp_registrations (Upsert to handle retry)
         const { error: tempError } = await supabase.from('temp_registrations').upsert({

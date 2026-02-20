@@ -7,7 +7,7 @@ import { createApiWorker } from '../../../store/utils/apiWorker';
 export const getProfileActions = createApiActions<void, any>('profile/get')
 export const updateProfileActions = createApiActions<any, any>('profile/update')
 export const sendOtpActions = createApiActions<{ email: string; name: string; username: string }, any>('profile/send-otp')
-export const verifyEmailActions = createApiActions<{ email: string; otp: string }, any>('profile/verify-email')
+export const verifyEmailActions = createApiActions<{ email: string; otp: number }, any>('profile/verify-email')
 
 
 
@@ -28,7 +28,7 @@ const handleSendOtp = async (payload: { email: string }) => {
 }
 
 
-const handleVerifyEmail = async (data: { email: string; otp: string }) => {
+const handleVerifyEmail = async (data: { email: string; otp: number }) => {
     const response = await apiClient.post('/user/verify-email', data);
     return response.data;
 }
@@ -36,7 +36,7 @@ const handleVerifyEmail = async (data: { email: string; otp: string }) => {
 
 
 const getAllProfileWorker = createApiWorker(getProfileActions,handleGetProfile);
-const sendOtpWorker = createApiWorker(sendOtpActions, handleSendOtp);
+const sendOtpWorker = createApiWorker(sendOtpActions, handleSendOtp, undefined, undefined, 'OTP Sent Successfully');
 const verifyEmailWorker = createApiWorker(verifyEmailActions, handleVerifyEmail);
 const updateProfileWorker = createApiWorker(updateProfileActions, handleUpdateProfile);
 

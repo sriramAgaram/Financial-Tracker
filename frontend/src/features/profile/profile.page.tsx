@@ -4,9 +4,13 @@ import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { FloatLabel } from 'primereact/floatlabel';
+import { IconField } from 'primereact/iconfield';
+import { InputIcon } from 'primereact/inputicon';
+import { Tooltip } from 'primereact/tooltip';
+import { InputOtp } from 'primereact/inputotp';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import {  selectProfileData, selectProfileLoading } from './redux/profileSlice';
+import { ProfileSchema } from './schema';
+import { selectProfileData, selectProfileLoading } from './redux/profileSlice';
 import { getProfileActions, sendOtpActions, updateProfileActions, verifyEmailActions } from './redux/profileSagas';
 import { useAppSelector } from '../../hooks/useAppSelector';
 
@@ -16,7 +20,7 @@ const ProfilePage = () => {
     const isLoading = useAppSelector(selectProfileLoading);
     const [isEditing, setIsEditing] = useState(false);
     const [showOtpDialog, setShowOtpDialog] = useState(false);
-    const [otp, setOtp] = useState('');
+    const [otp, setOtp] = useState<string>('');
 
     useEffect(() => {
         dispatch(getProfileActions.request());
@@ -29,11 +33,7 @@ const ProfilePage = () => {
             email: profile?.email || '',
         },
         enableReinitialize: true,
-        validationSchema: Yup.object({
-            name: Yup.string().required('Full name is required'),
-            username: Yup.string().required('Username is required'),
-            email: Yup.string().email('Invalid email').required('Email is required'),
-        }),
+        validationSchema: ProfileSchema,
         onSubmit: (values) => {
             dispatch(updateProfileActions.request(values));
             setIsEditing(false);
@@ -52,8 +52,8 @@ const ProfilePage = () => {
     };
 
     const handleVerifySubmit = () => {
-        if (profile?.email && otp.length === 6) {
-            dispatch(verifyEmailActions.request({ email: profile.email, otp }));
+        if (profile?.email && otp.length === 4) {
+            dispatch(verifyEmailActions.request({ email: profile.email, otp: Number.parseInt(otp, 10) }));
             setShowOtpDialog(false);
             setOtp('');
         }
@@ -65,7 +65,7 @@ const ProfilePage = () => {
                 <div className="grid md:grid-cols-12">
                     
                     {/* Left Section: Visual Identity */}
-                    <div className="col-span-full md:col-span-4 bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 p-10 flex flex-col items-center justify-center text-white relative overflow-hidden">
+                    <div className="col-span-full md:col-span-4 bg-linear-to-br from-indigo-600 via-violet-600 to-purple-700 p-10 flex flex-col items-center justify-center text-white relative overflow-hidden">
                         {/* Decorative Circles */}
                         <div className="-top-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-2xl absolute"></div>
                         <div className="-bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xl absolute"></div>
@@ -80,7 +80,7 @@ const ProfilePage = () => {
                             
                             <div className="mt-8 inline-flex items-center px-4 py-1.5 bg-white/15 backdrop-blur-sm rounded-full border border-white/20 text-xs font-semibold">
                                 <span className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></span>
-                                Active Member
+                               <h4>Active Member</h4> 
                             </div>
                         </div>
                     </div>
@@ -90,7 +90,6 @@ const ProfilePage = () => {
                         <div className="flex justify-between items-center mb-10">
                             <div>
                                 <h3 className="text-2xl font-bold text-slate-800">Account Details</h3>
-                                <p className="text-slate-500 text-sm mt-1">Manage your personal information and verified status.</p>
                             </div>
                             {!isEditing && (
                                 <Button 
@@ -104,61 +103,61 @@ const ProfilePage = () => {
 
                         <form onSubmit={formik.handleSubmit} className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FloatLabel>
-                                    <InputText 
-                                        id="name" 
-                                        name="name"
-                                        value={formik.values.name} 
-                                        onChange={formik.handleChange} 
-                                        disabled={!isEditing}
-                                        className={`w-full p-4 rounded-2xl transition-all duration-300 ${isEditing ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-100/50 border-transparent text-slate-600'}`}
-                                    />
-                                    <label htmlFor="name" className="ml-2">Full Name</label>
-                                </FloatLabel>
+                                <div className="space-y-1">
+                                    <FloatLabel>
+                                        <InputText 
+                                            id="name" 
+                                            name="name"
+                                            value={formik.values.name} 
+                                            onChange={formik.handleChange} 
+                                            onBlur={formik.handleBlur}
+                                            disabled={!isEditing}
+                                            className={`w-full p-4 rounded-2xl transition-all duration-300 ${isEditing ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-100/50 border-transparent text-slate-600'} ${formik.touched.name && formik.errors.name ? 'p-invalid' : ''}`}
+                                        />
+                                        <label htmlFor="name" className="ml-2">Full Name</label>
+                                    </FloatLabel>
+                                    {formik.touched.name && formik.errors.name && <small className="text-red-500 text-xs ml-2 block">{formik.errors.name}</small>}
+                                </div>
 
-                                <FloatLabel>
-                                    <InputText 
-                                        id="username" 
-                                        name="username"
-                                        value={formik.values.username} 
-                                        onChange={formik.handleChange} 
-                                        disabled={!isEditing}
-                                        className={`w-full p-4 rounded-2xl transition-all duration-300 ${isEditing ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-100/50 border-transparent text-slate-600'}`}
-                                    />
-                                    <label htmlFor="username" className="ml-2">Username</label>
-                                </FloatLabel>
+                                <div className="space-y-1">
+                                    <FloatLabel>
+                                        <InputText 
+                                            id="username" 
+                                            name="username"
+                                            value={formik.values.username} 
+                                            onChange={formik.handleChange} 
+                                            onBlur={formik.handleBlur}
+                                            disabled={!isEditing}
+                                            className={`w-full p-4 rounded-2xl transition-all duration-300 ${isEditing ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-100/50 border-transparent text-slate-600'} ${formik.touched.username && formik.errors.username ? 'p-invalid' : ''}`}
+                                        />
+                                        <label htmlFor="username" className="ml-2">Username</label>
+                                    </FloatLabel>
+                                    {formik.touched.username && formik.errors.username && <small className="text-red-500 text-xs ml-2 block">{formik.errors.username}</small>}
+                                </div>
                             </div>
 
-                            <div className="relative">
+                            <div className="relative space-y-1">
+                                <Tooltip target=".verify-tooltip" />
                                 <FloatLabel>
-                                    <InputText 
-                                        id="email" 
-                                        name="email"
-                                        value={formik.values.email} 
-                                        onChange={formik.handleChange} 
-                                        disabled={!isEditing}
-                                        className={`w-full p-4 rounded-2xl transition-all duration-300 ${isEditing ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-100/50 border-transparent text-slate-600'}`}
-                                    />
+                                    <IconField iconPosition="right">
+                                        <InputIcon 
+                                            className={`pi ${profile?.is_verified ? 'pi-check !text-emerald-500' : 'pi-exclamation-triangle !text-amber-500 cursor-pointer verify-tooltip'} transition-all hover:scale-110`} 
+                                            onClick={!isEditing && !profile?.is_verified ? handleVerifyClick : undefined}
+                                            data-pr-tooltip={profile?.is_verified ? "Verified" : "Verify Email"}
+                                        />
+                                        <InputText 
+                                            id="email" 
+                                            name="email"
+                                            value={formik.values.email} 
+                                            onChange={formik.handleChange} 
+                                            onBlur={formik.handleBlur}
+                                            disabled={!isEditing}
+                                            className={`w-full p-4 rounded-2xl transition-all duration-300 ${isEditing ? 'bg-white border-indigo-200 shadow-sm' : 'bg-slate-100/50 border-transparent text-slate-600'} ${formik.touched.email && formik.errors.email ? 'p-invalid' : ''}`}
+                                        />
+                                    </IconField>
                                     <label htmlFor="email" className="ml-2">Email Address</label>
                                 </FloatLabel>
-                                
-                                {!isEditing && (
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                                        {profile?.is_verified ? (
-                                            <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100">
-                                                <i className="pi pi-verified text-sm"></i>
-                                            </div>
-                                        ) : (
-                                            <Button 
-                                                label="VERIFY NOW"
-                                                icon="pi pi-shield"
-                                                className="p-button-sm bg-amber-500 border-none rounded-full px-4 py-2 text-[10px] font-black text-white hover:bg-amber-600 shadow-md transition-all hover:scale-105 active:scale-95"
-                                                onClick={handleVerifyClick}
-                                                loading={isLoading}
-                                            />
-                                        )}
-                                    </div>
-                                )}
+                                {formik.touched.email && formik.errors.email && <small className="text-red-500 text-xs ml-2 block">{formik.errors.email}</small>}
                             </div>
 
                             {isEditing && (
@@ -171,7 +170,7 @@ const ProfilePage = () => {
                                     />
                                     <Button 
                                         type="submit" 
-                                        label="Save Changes" 
+                                        label="Save" 
                                         icon="pi pi-check" 
                                         className="bg-indigo-600 border-none rounded-[1.25rem] px-8 py-4 font-bold shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_30px_rgba(79,70,229,0.4)] transition-all hover:scale-105" 
                                         loading={isLoading}
@@ -193,22 +192,22 @@ const ProfilePage = () => {
                 maskClassName="backdrop-blur-md bg-slate-900/40"
             >
                 <div className="p-8 text-center">
-                    <div className="w-20 h-20 bg-amber-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                    <div className="w-20 h-20 bg-amber-100 rounded-4xl flex items-center justify-center mx-auto mb-6">
                         <i className="pi pi-envelope text-4xl text-amber-600"></i>
                     </div>
                     <h2 className="text-2xl font-black text-slate-800 mb-2">Verify Email</h2>
                     <p className="text-slate-500 text-sm leading-relaxed mb-8">
-                        We've sent a 6-digit verification code to <br/>
+                        We've sent a 4-digit verification code to <br/>
                         <span className="font-bold text-slate-700">{profile?.email}</span>
                     </p>
                     
-                    <div className="mb-8">
-                        <InputText 
+                    <div className="mb-8 flex justify-center">
+                        <InputOtp 
                             value={otp} 
-                            onChange={(e) => setOtp(e.target.value)} 
-                            maxLength={6} 
-                            placeholder="0 0 0 0 0 0"
-                            className="w-full text-center text-4xl font-black tracking-[0.5em] p-5 rounded-[1.5rem] bg-slate-50 border-2 border-slate-100 focus:border-indigo-600 transition-all"
+                            onChange={(e) => setOtp(e.value?.toString() || '')} 
+                            length={4} 
+                            integerOnly
+                            className="justify-center"
                         />
                     </div>
 
@@ -218,7 +217,7 @@ const ProfilePage = () => {
                             className="w-full bg-indigo-600 border-none rounded-[1.25rem] py-5 font-black shadow-xl hover:scale-[1.02] active:scale-95 transition-all" 
                             onClick={handleVerifySubmit}
                             loading={isLoading}
-                            disabled={otp.length !== 6}
+                            disabled={otp.length !== 4}
                         />
                         <Button 
                             label="Resend Code" 
