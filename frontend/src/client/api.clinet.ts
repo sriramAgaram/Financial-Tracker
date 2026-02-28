@@ -16,7 +16,7 @@ apiClient.interceptors.request.use(
     }
 
     // Automatically inject ledger_id for non-auth requests
-    if (ledgerId && !config.url?.includes('/auth/')) {
+    if (ledgerId && ledgerId !== 'undefined' && !config.url?.includes('/auth/')) {
       if (config.method === 'get' || config.method === 'delete') {
         config.params = { ...config.params, ledger_id: ledgerId };
       } else if (config.method === 'post' || config.method === 'put') {

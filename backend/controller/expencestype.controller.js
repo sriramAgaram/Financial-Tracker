@@ -87,11 +87,13 @@ exports.update = async (req, res) => {
 
 exports.lists = async (req, res) => {
     try {
+        const ledger_id = req.query.ledger_id || req.body.ledger_id || null;
+
         const { data, error } = await supabase
             .from('expense_type')
             .select('*')
             .eq('user_id', req.user.userId)
-            .eq('ledger_id', req.query.ledger_id)
+            .eq('ledger_id', ledger_id)
             .order('created_at', { ascending: false });
 
         if (error) {
