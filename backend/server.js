@@ -12,6 +12,7 @@ const limitRoute = require('./router/limit.route');
 const dataRoute = require('./router/data.route');
 const cronRoute = require('./router/cron.route');
 const userRoute = require('./router/user.route');
+const ledgerRoute = require('./router/ledger.route');
 
 app.use(cors());
 dotenv.config();
@@ -26,9 +27,10 @@ app.use('/limit', limitRoute);
 app.use('/data', dataRoute);
 app.use('/cron', cronRoute);
 app.use('/user', userRoute);
+app.use('/ledger', ledgerRoute);
 
 
 
 app.listen(port, () => {
-    console.log('Server is Running on Port', port)
+    console.log('Server is Running on Port', port);
 })

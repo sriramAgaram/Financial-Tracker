@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense, useCallback, useMemo } from "react";
 import { useDispatch } from "react-redux"
 import { deleteTransactionActions, listTransactionActions } from "./redux/listSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
@@ -39,13 +39,14 @@ const ListPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const onPageChange = (e:any) => {
-    setPagenateDate({
-      ...pagenateData,
-      pageNumber:e.page +1,
-      rows:e.rows
-    })
-  }
+  const onPageChange = useCallback((e: any) => {
+    setPagenateDate((prev) => ({
+      ...prev,
+      pageNumber: e.page + 1,
+      rows: e.rows
+    }));
+  }, []);
+
   const dispatch = useDispatch();
   const transactions = useAppSelector(selectTransactionsList);
   const totalCount = useAppSelector(selectTotalCount)
@@ -54,9 +55,9 @@ const ListPage = () => {
     dispatch(listTransactionActions.request({...pagenateData , category: searchForm.category}));
   }, [pagenateData , updateSuccess, deleteSuccess, searchForm])
 
-  const paginatorTemplate = isMobile 
+  const paginatorTemplate = useMemo(() => isMobile 
     ? "PrevPageLink CurrentPageReport NextPageLink RowsPerPageDropdown"
-    : "FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport";
+    : "FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport", [isMobile]);
 
   return (
     <div className="relative h-[calc(100vh-64px)] flex flex-col bg-slate-50/50">

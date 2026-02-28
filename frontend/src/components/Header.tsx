@@ -2,6 +2,7 @@ import { Button } from 'primereact/button'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import {  confirmDialog } from 'primereact/confirmdialog';
+import LedgerSwitcher from '../features/ledger/components/LedgerSwitcher';
 
 
 interface HeaderProps {
@@ -42,6 +43,8 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, onMobileMenuToggle }) => {
             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-800 to-slate-600">
                 {pageTitle}
             </h1>
+
+            <LedgerSwitcher />
             
             <Button 
                 onClick={logout}

@@ -5,6 +5,7 @@ const transactionSchemas = {
         body: z.object({
             amount: z.number({ required_error: "Amount is required" }).positive("Amount must be positive"),
             expense_type_id: z.number({ required_error: "Expense type is required" }),
+            ledger_id: z.number({ required_error: "Ledger ID is required" }),
             date: z.string({ required_error: "Date is required" }).refine((val) => !isNaN(Date.parse(val)), {
                 message: "Invalid date format",
             }),
@@ -26,6 +27,7 @@ const transactionSchemas = {
         body: z.object({
             pageNumber: z.number({ required_error: "Page number is required" }).min(1),
             rows: z.number({ required_error: "Rows per page is required" }).min(1),
+            ledger_id: z.number({ required_error: "Ledger ID is required" }),
             category: z.array(z.number()).optional(),
         }),
     }),

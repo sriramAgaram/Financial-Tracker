@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Chart } from 'primereact/chart';
 
 
@@ -10,7 +10,7 @@ interface ChartProps {
     overExpenseLabels: string[];
 }
 
-export default function Barchart({ chartData, labels , overExpenseChartData}: ChartProps) {
+const Barchart = memo(({ chartData, labels , overExpenseChartData}: ChartProps) => {
     const [chartDataState, setChartDataState] = useState({});
     const [chartOptions, setChartOptions] = useState({});
 
@@ -84,5 +84,7 @@ export default function Barchart({ chartData, labels , overExpenseChartData}: Ch
             <Chart type="line" data={chartDataState} options={chartOptions} className="w-full h-full" />
         </div>
     )
-}
+});
+
+export default Barchart;
         

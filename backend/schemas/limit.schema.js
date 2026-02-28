@@ -6,6 +6,7 @@ const limitSchemas = {
             monthly_limit: z.number().positive().optional(),
             daily_limit: z.number({ required_error: "Daily limit is required" }).positive(),
             overall_amount: z.number().positive().optional(),
+            ledger_id: z.number({ required_error: "Ledger ID is required" }),
         }),
     }),
     update: z.object({

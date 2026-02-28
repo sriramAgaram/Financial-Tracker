@@ -26,7 +26,7 @@ exports.add = async (req, res) => {
             if (error.code === '23505') {
                 return res.status(400).json({
                     status: false,
-                    msg: 'User already has a limit set. Use update instead.'
+                    msg: 'This Ledger already has a limit set. Use update instead.'
                 });
             }
             return res.status(500).json({
@@ -107,7 +107,9 @@ exports.getAll = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('amount_limit')
-            .select('*').eq('user_id', req.user.userId)
+            .select('*')
+            .eq('user_id', req.user.userId)
+            .eq('ledger_id', req.query.ledger_id)
             .order('created_at', { ascending: false });
 
         if (error) {

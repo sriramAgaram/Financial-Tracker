@@ -9,9 +9,21 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    const ledgerId = localStorage.getItem('activeLedgerId');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Automatically inject ledger_id for non-auth requests
+    if (ledgerId && !config.url?.includes('/auth/')) {
+      if (config.method === 'get' || config.method === 'delete') {
+        config.params = { ...config.params, ledger_id: ledgerId };
+      } else if (config.method === 'post' || config.method === 'put') {
+        config.data = { ...config.data, ledger_id: Number.parseInt(ledgerId) };
+      }
+    }
+
     return config;
   },
   (error) => {

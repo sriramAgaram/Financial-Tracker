@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format, subDays } from "date-fns";
 import Barchart from "./components/Barchart.tsx";
@@ -15,10 +15,10 @@ const DashboardPage = () => {
         dispatch(weeklyDataActions.request({ fromDate, toDate }));
     }, [dispatch]);
 
-    const ChartData = weeklyData?.chartData || [];
-    const Labels = weeklyData?.labels || [];
-    const overExpenseChartData = weeklyData?.overExpenseChartData || [];
-    const overExpenseLabels = weeklyData?.overExpenseLabels || [];
+    const ChartData = useMemo(() => weeklyData?.chartData || [], [weeklyData?.chartData]);
+    const Labels = useMemo(() => weeklyData?.labels || [], [weeklyData?.labels]);
+    const overExpenseChartData = useMemo(() => weeklyData?.overExpenseChartData || [], [weeklyData?.overExpenseChartData]);
+    const overExpenseLabels = useMemo(() => weeklyData?.overExpenseLabels || [], [weeklyData?.overExpenseLabels]);
 
 
 

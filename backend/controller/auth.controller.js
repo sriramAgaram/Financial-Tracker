@@ -126,9 +126,23 @@ exports.completeSignup = async (req, res, next) => {
              return res.status(500).json({ status: false, msg: 'Signup completion failed', error: insertError });
         }
 
-        // 5. Initialize User Data (Limits & Expense Types)
+        // 5. Initialize User Data (Ledger, Limits & Expense Types)
+        const { data: ledgerData, error: ledgerError } = await supabase.from('ledgers').insert([{
+            user_id: userData.user_id,
+            name: 'Personal',
+            is_default: true
+        }]).select().single();
+
+        if (ledgerError) {
+            console.error('Ledger Creation Error:', ledgerError);
+            // Non-critical error, but should log
+        }
+
+        const ledgerId = ledgerData?.ledger_id;
+
         await supabase.from('amount_limit').insert([{
             user_id: userData.user_id,
+            ledger_id: ledgerId,
             monthly_limit: 1000,
             daily_limit: 100,
             overall_amount: 1000
@@ -136,6 +150,7 @@ exports.completeSignup = async (req, res, next) => {
 
         await supabase.from('expense_type').insert([{
             user_id: userData.user_id,
+            ledger_id: ledgerId,
             expense_name: 'Travel Expenses'
         }]);
 
@@ -158,6 +173,9 @@ exports.login = async (req, res, next) => {
             res.status(404).json({status: false , msg: 'Login Fields are Missing...'})
         }
         const { data: user, error } = await supabase.from('users').select("*").eq('username', username).single();
+        if(error){
+            console.log('supabase Error' ,error)
+        }
         if (!user) {
             return res.status(401).json({ status: false, msg: 'Invalid username or password' });
         }
