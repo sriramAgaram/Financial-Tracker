@@ -38,3 +38,28 @@ UPDATE expense_type et
 SET ledger_id = l.ledger_id 
 FROM ledgers l 
 WHERE et.user_id = l.user_id AND l.is_default = TRUE;
+
+-- 7. Update get_daily_totals function to accept p_ledger_id
+OR REPLACE FUNCTION get_daily_totals(
+    p_user_id UUID,
+    p_ledger_id BIGINT,
+    p_from_date DATE,
+    p_to_date DATE
+)
+RETURNS TABLE (
+    transaction_date DATE,
+    total_amount NUMERIC
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        date::DATE as transaction_date,
+        COALESCE(SUM(amount), 0) as total_amount
+    FROM transactions
+    WHERE user_id = p_user_id
+      AND ledger_id = p_ledger_id
+      AND date::DATE BETWEEN p_from_date AND p_to_date
+    GROUP BY date::DATE
+    ORDER BY transaction_date;
+END;
+$$ LANGUAGE plpgsql;

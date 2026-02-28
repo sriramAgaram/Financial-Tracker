@@ -97,6 +97,7 @@ exports.lists = async (req, res) => {
             .order('created_at', { ascending: false });
 
         if (error) {
+            console.error('Fetch Expense Types Error:', error);
             return res.status(500).json({ status: false, msg: 'Failed to fetch expense types', error });
         }
 

@@ -112,10 +112,11 @@ exports.lists = async (req, res) => {
             .range(from, to);
 
         if (error) {
+            console.error('Fetch Transactions Error:', error);
             return res.status(500).json({
                 status: false,
                 msg: 'Failed to fetch transactions',
-                error: error.message
+                error: error
             });
         }
 
@@ -232,7 +233,8 @@ exports.weeklyData = async (req, res) => {
         }
 
         if (error) {
-            return res.status(400).json({ error: error.message });
+            console.error('Weekly Data RPC Error:', error);
+            return res.status(400).json({ error: error });
         }
 
         // Extract arrays for chart
