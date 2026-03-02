@@ -19,7 +19,8 @@ const homeDataApi = async () => {
 }
 
 const expenseType = async() =>{
-  const response = await apiClient.get('/expencestype/lists')
+  const ledger_id = localStorage.getItem('activeLedgerId');
+  const response = await apiClient.get('/expencestype/lists', { params: { ledger_id } })
   return response.data
 }
 

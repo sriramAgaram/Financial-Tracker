@@ -86,45 +86,44 @@ exports.homedata = async (req, res) => {
 
         const { data: limitData, error: limitError } = await supabase.from('amount_limit').select('*').eq('user_id', userId).single();
 
-        // Get monthly transactions
-        const { data: monthlyTransactions, error: monthlyError } = await supabase
-            .from('transactions')
-            .select('amount')
-            .eq('user_id', userId)
-            .eq('ledger_id', limitData?.ledger_id)
-            .gte('date', startMonth.toISOString())
-            .lt('date', startNextMonth.toISOString());
-
-        // Get daily transactions
-        const { data: dailyTransactions, error: dailyError } = await supabase
-            .from('transactions')
-            .select('amount')
-            .eq('user_id', userId)
-            .eq('ledger_id', limitData?.ledger_id)
-            .gte('date', startToday.toISOString())
-            .lt('date', startTomorrow.toISOString());
-
-        if (monthlyError || dailyError || limitError) {
-            throw monthlyError || dailyError || limitError;
-        }
-
-        // Calculate sums client-side
-        const monthlySum = monthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
-        const dailySum = dailyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
-
         if (limitData) {
-            let amt = limitData;
+            // Get monthly transactions
+            const { data: monthlyTransactions, error: monthlyError } = await supabase
+                .from('transactions')
+                .select('amount')
+                .eq('user_id', userId)
+                .eq('ledger_id', limitData.ledger_id)
+                .gte('date', startMonth.toISOString())
+                .lt('date', startNextMonth.toISOString());
+
+            // Get daily transactions
+            const { data: dailyTransactions, error: dailyError } = await supabase
+                .from('transactions')
+                .select('amount')
+                .eq('user_id', userId)
+                .eq('ledger_id', limitData.ledger_id)
+                .gte('date', startToday.toISOString())
+                .lt('date', startTomorrow.toISOString());
+
+            if (monthlyError || dailyError) {
+                throw monthlyError || dailyError;
+            }
+
+            // Calculate sums client-side
+            const monthlySum = monthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
+            const dailySum = dailyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
+
             let currentExpense = monthlySum;
             let currentDailyExpense = dailySum;
-            let balanceMonthlyAmt = amt.monthly_limit - currentExpense;
-            let balanceDailyAmt = amt.daily_limit - currentDailyExpense;
-            let balanceOverallAmt = amt.overall_amount - currentExpense;
+            let balanceMonthlyAmt = limitData.monthly_limit - currentExpense;
+            let balanceDailyAmt = limitData.daily_limit - currentDailyExpense;
+            let balanceOverallAmt = limitData.overall_amount - currentExpense;
 
 
             res.status(200).json({
                 status: true,
                 msg: 'Data Fetched Successfully',
-                data: { balanceDailyAmt, balanceMonthlyAmt, dailyLimit: amt.daily_limit, monthlyLimit: amt.monthly_limit, balanceOverallAmt}
+                data: { balanceDailyAmt, balanceMonthlyAmt, dailyLimit: limitData.daily_limit, monthlyLimit: limitData.monthly_limit, balanceOverallAmt}
             });
         } else {
             res.status(404).json({ status: false, msg: 'Limit data not found' });
