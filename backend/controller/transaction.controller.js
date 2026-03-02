@@ -100,7 +100,7 @@ exports.lists = async (req, res) => {
             `, { count: 'estimated' })
             
             .eq('user_id', req.user.userId)
-            .eq('ledger_id', req.body.ledger_id || req.query.ledger_id)
+            .eq('ledger_id', req.body.ledger_id || req.query.ledger_id || null)
             
             
         if(category && category.length > 0){
@@ -212,7 +212,7 @@ exports.weeklyData = async (req, res) => {
     try {
         const { fromDate, toDate } = req.body;
         
-        const ledger_id = req.body.ledger_id || req.query.ledger_id;
+        const ledger_id = req.body.ledger_id || req.query.ledger_id || null;
 
         const { data, error } = await supabase.rpc('get_daily_totals', {
             p_user_id: req.user.userId,

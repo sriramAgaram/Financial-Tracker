@@ -91,6 +91,7 @@ exports.homedata = async (req, res) => {
             .from('transactions')
             .select('amount')
             .eq('user_id', userId)
+            .eq('ledger_id', limitData?.ledger_id)
             .gte('date', startMonth.toISOString())
             .lt('date', startNextMonth.toISOString());
 
@@ -99,6 +100,7 @@ exports.homedata = async (req, res) => {
             .from('transactions')
             .select('amount')
             .eq('user_id', userId)
+            .eq('ledger_id', limitData?.ledger_id)
             .gte('date', startToday.toISOString())
             .lt('date', startTomorrow.toISOString());
 
