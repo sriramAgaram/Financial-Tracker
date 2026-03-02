@@ -100,7 +100,7 @@ export default function DropdownSettingComponent() {
                 <Dropdown
                     value={data}
                     onChange={(e) => setData(e.value)}
-                    options={expenstTypeOptions}
+                    options={expenstTypeOptions || []}
                     optionLabel="expense_name"
                     placeholder="Select an Expense Type"
                     filter

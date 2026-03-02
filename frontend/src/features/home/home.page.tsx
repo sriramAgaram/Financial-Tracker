@@ -117,7 +117,7 @@ const HomePage: React.FC = () => {
               name="expences_type_id"
               value={data.expences_type_id}
               onChange={handleChange}
-              options={expenseTypes}
+              options={expenseTypes || []}
               optionLabel="expense_name"
               optionValue="expense_type_id"
               placeholder="Select Expense Type"

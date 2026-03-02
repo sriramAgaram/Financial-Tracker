@@ -10,7 +10,7 @@ interface HomeState {
     monthlyLimit:0,
     balanceOverallAmt: 0
   } | null
-  expenseTypes: any[]
+  expenseTypes: any[] | null
   isLoading: boolean
   error: string | null,
   deleteSuccess: boolean
@@ -21,7 +21,7 @@ interface HomeState {
 // Initial state
 const initialState: HomeState = {
   dashboardData: null,
-  expenseTypes: [],
+  expenseTypes: null,
   isLoading: false,
   error: null,
   deleteSuccess: false
@@ -36,7 +36,7 @@ const homeSlice = createSlice({
   reducers: {
     resetHome: (state) => {
       state.dashboardData = null
-      state.expenseTypes = []
+      state.expenseTypes = null
       state.isLoading = false
       state.error = null
       state.deleteSuccess = false

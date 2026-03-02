@@ -10,10 +10,10 @@ export const useExpenseTypes = () => {
     const error = useAppSelector(selectError);
     const isLoading = useAppSelector(selectIsLoading);
     useEffect(() => {
-        if (expenseTypes.length === 0 && !error && !isLoading) {
+        if (expenseTypes === null && !error && !isLoading) {
             dispatch(expenseTypeActions.request())
         }
-    }, [dispatch, expenseTypes.length, error, isLoading])
+    }, [dispatch, expenseTypes, error, isLoading])
 
     return expenseTypes;
 }

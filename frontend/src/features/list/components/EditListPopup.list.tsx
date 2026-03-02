@@ -72,7 +72,7 @@ export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
                                 ...prev,
                                 expense_type_id: e.value
                             }))}
-                            options={expencesTypes}
+                            options={expencesTypes || []}
                             optionLabel="expense_name"
                             optionValue="expense_type_id"
                             placeholder="Select an Expense Type"
