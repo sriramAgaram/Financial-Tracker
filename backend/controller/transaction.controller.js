@@ -100,7 +100,7 @@ exports.lists = async (req, res) => {
             `, { count: 'estimated' })
             
             .eq('user_id', req.user.userId)
-            .eq('ledger_id', req.body.ledger_id || req.query.ledger_id || null)
+            .eq('ledger_id', req.body?.ledger_id || req.query?.ledger_id || null)
             
             
         if(category && category.length > 0){

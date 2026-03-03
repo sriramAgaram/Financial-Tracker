@@ -22,7 +22,7 @@ exports.add = async (req, res) => {
             });
         }
 
-        const ledgerId = ledger.ledger_id;
+        const ledgerId = ledger?.ledger_id;
         const userId = req.user.userId;
 
         // Auto-initialize Limits for the new ledger

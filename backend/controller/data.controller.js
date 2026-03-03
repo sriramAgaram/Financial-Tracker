@@ -70,7 +70,15 @@ exports.getSettingsData = async (req, res) => {
 exports.homedata = async (req, res) => {
     try {
         const userId = req.user?.userId
-        const ledgerId = req.body.ledger_id || req.query.ledger_id;
+        
+        // Defensive check: req.body and req.query might be undefined in some environments
+        const ledgerId = req.body?.ledger_id || req.query?.ledger_id;
+
+        console.log('--- DEBUG HOMEDATA ---');
+        console.log('User ID:', userId);
+        console.log('Ledger ID:', ledgerId);
+        console.log('Body:', req.body);
+        console.log('Query:', req.query);
 
         if (!userId) {
             return res.status(400).json({
