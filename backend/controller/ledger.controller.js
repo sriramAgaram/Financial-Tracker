@@ -1,5 +1,5 @@
 const supabase = require("../config/supabase.js");
-const { getLedgerFields } = require("../models/ledger.model.js");
+const { getLedgerFieldsForCreate, getLedgerFieldsForUpdate } = require("../models/ledger.model.js");
 
 exports.add = async (req, res) => {
     try {
