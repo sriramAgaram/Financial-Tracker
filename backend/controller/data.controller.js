@@ -70,12 +70,22 @@ exports.getSettingsData = async (req, res) => {
 exports.homedata = async (req, res) => {
     try {
         const userId = req.user?.userId
+        const ledgerId = req.body.ledger_id || req.query.ledger_id;
+
         if (!userId) {
             return res.status(400).json({
                 status: false,
                 msg: 'User ID is required'
             });
         }
+
+        if (!ledgerId) {
+            return res.status(400).json({
+                status: false,
+                msg: 'Ledger ID is required'
+            });
+        }
+
         const now = new Date()
 
         // Use UTC dates to avoid timezone issues
@@ -84,24 +94,29 @@ exports.homedata = async (req, res) => {
         const startNextMonth = startOfMonth(addMonths(now, 1))
         const startTomorrow = startOfDay(addDays(now, 1));
 
-        const { data: limitData, error: limitError } = await supabase.from('amount_limit').select('*').eq('user_id', userId).single();
+        const { data: limitData, error: limitError } = await supabase
+            .from('amount_limit')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('ledger_id', ledgerId)
+            .single();
 
         if (limitData) {
-            // Get monthly transactions
+            // Get monthly transactions for THIS ledger
             const { data: monthlyTransactions, error: monthlyError } = await supabase
                 .from('transactions')
                 .select('amount')
                 .eq('user_id', userId)
-                .eq('ledger_id', limitData.ledger_id)
+                .eq('ledger_id', ledgerId)
                 .gte('date', startMonth.toISOString())
                 .lt('date', startNextMonth.toISOString());
 
-            // Get daily transactions
+            // Get daily transactions for THIS ledger
             const { data: dailyTransactions, error: dailyError } = await supabase
                 .from('transactions')
                 .select('amount')
                 .eq('user_id', userId)
-                .eq('ledger_id', limitData.ledger_id)
+                .eq('ledger_id', ledgerId)
                 .gte('date', startToday.toISOString())
                 .lt('date', startTomorrow.toISOString());
 
@@ -109,24 +124,29 @@ exports.homedata = async (req, res) => {
                 throw monthlyError || dailyError;
             }
 
-            // Calculate sums client-side
             const monthlySum = monthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
             const dailySum = dailyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
 
-            let currentExpense = monthlySum;
-            let currentDailyExpense = dailySum;
-            let balanceMonthlyAmt = limitData.monthly_limit - currentExpense;
-            let balanceDailyAmt = limitData.daily_limit - currentDailyExpense;
-            let balanceOverallAmt = limitData.overall_amount - currentExpense;
+            let balanceMonthlyAmt = limitData.monthly_limit - monthlySum;
+            let balanceDailyAmt = limitData.daily_limit - dailySum;
+            let balanceOverallAmt = limitData.overall_amount - monthlySum;
 
 
             res.status(200).json({
                 status: true,
                 msg: 'Data Fetched Successfully',
-                data: { balanceDailyAmt, balanceMonthlyAmt, dailyLimit: limitData.daily_limit, monthlyLimit: limitData.monthly_limit, balanceOverallAmt}
+                data: { 
+                    balanceDailyAmt, 
+                    balanceMonthlyAmt, 
+                    dailyLimit: limitData.daily_limit, 
+                    monthlyLimit: limitData.monthly_limit, 
+                    balanceOverallAmt,
+                    currentExpense: monthlySum,
+                    currentDailyExpense: dailySum
+                }
             });
         } else {
-            res.status(404).json({ status: false, msg: 'Limit data not found' });
+            res.status(404).json({ status: false, msg: 'Limit data not found for this ledger' });
         }
 
     } catch (error) {

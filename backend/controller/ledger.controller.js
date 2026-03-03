@@ -8,10 +8,11 @@ exports.add = async (req, res) => {
         
         let ledgerData = getLedgerFields(userInput);
         
-        const { data, error } = await supabase
+        const { data: ledger, error } = await supabase
             .from('ledgers')
             .insert([ledgerData])
-            .select();
+            .select()
+            .single();
 
         if (error) {
             return res.status(500).json({
@@ -21,10 +22,29 @@ exports.add = async (req, res) => {
             });
         }
 
+        const ledgerId = ledger.ledger_id;
+        const userId = req.user.userId;
+
+        // Auto-initialize Limits for the new ledger
+        await supabase.from('amount_limit').insert([{
+            user_id: userId,
+            ledger_id: ledgerId,
+            monthly_limit: 1000,
+            daily_limit: 100,
+            overall_amount: 1000
+        }]);
+
+        // Auto-initialize default Expense Type for the new ledger
+        await supabase.from('expense_type').insert([{
+            user_id: userId,
+            ledger_id: ledgerId,
+            expense_name: 'Travel Expenses'
+        }]);
+
         res.status(201).json({
             status: true,
-            msg: 'Ledger created successfully',
-            data
+            msg: 'Ledger created and initialized successfully',
+            data: ledger
         });
     } catch (error) {
         res.status(500).json({
