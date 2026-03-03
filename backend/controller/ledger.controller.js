@@ -6,7 +6,7 @@ exports.add = async (req, res) => {
         let userInput = req.body;
         userInput['user_id'] = req.user.userId;
         
-        let ledgerData = getLedgerFields(userInput);
+        let ledgerData = getLedgerFieldsForCreate(userInput);
         
         const { data: ledger, error } = await supabase
             .from('ledgers')
@@ -90,7 +90,7 @@ exports.update = async (req, res) => {
         const { id } = req.params;
         const updateData = req.body;
         
-        let ledgerUpdateData = getLedgerFields(updateData);
+        let ledgerUpdateData = getLedgerFieldsForUpdate(updateData);
         
         const { data, error } = await supabase
             .from('ledgers')

@@ -1,15 +1,21 @@
 const _ = require('lodash');
 
-const getLedgerFields = (data) => {
+const getLedgerFieldsForCreate = (data) => {
     return _.pick(data, [
-        'ledger_id',
         'user_id',
         'name',
-        'is_default',
-        'created_at'
+        'is_default'
+    ]);
+};
+
+const getLedgerFieldsForUpdate = (data) => {
+    return _.pick(data, [
+        'name',
+        'is_default'
     ]);
 };
 
 module.exports = {
-    getLedgerFields
+    getLedgerFieldsForCreate,
+    getLedgerFieldsForUpdate
 };
