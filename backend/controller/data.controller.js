@@ -74,12 +74,6 @@ exports.homedata = async (req, res) => {
         // Defensive check: req.body and req.query might be undefined in some environments
         const ledgerId = req.body?.ledger_id || req.query?.ledger_id;
 
-        console.log('--- DEBUG HOMEDATA ---');
-        console.log('User ID:', userId);
-        console.log('Ledger ID:', ledgerId);
-        console.log('Body:', req.body);
-        console.log('Query:', req.query);
-
         if (!userId) {
             return res.status(400).json({
                 status: false,
@@ -154,7 +148,7 @@ exports.homedata = async (req, res) => {
                 }
             });
         } else {
-            res.status(404).json({ status: false, msg: 'Limit data not found for this ledger' });
+            res.status(404).json({ status: false, msg: 'Limit data not found for this ledger', limitError });
         }
 
     } catch (error) {
