@@ -1,12 +1,12 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { loginActions, signupActions, logoutActions } from './authSagas'
+import { loginActions, initiateSignupActions, verifyOtpActions, completeSignupActions, logoutActions } from './authSagas'
 
 /**
- * AUTH SLICE - REFACTORED WITH FACTORY PATTERN
- * 
- * BEFORE: Manual reducers for each action (loginStart, loginSuccess, loginFailure, etc.)
- * AFTER: extraReducers that listen to the factory-generated action types
+ * AUTH SLICE - REFACTORED
  */
+
+const token = localStorage.getItem('token')
+
 
 // ============================================
 // STATE INTERFACE
@@ -20,14 +20,23 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
+  
+  // Signup State
+  signupStep: 1 | 2 | 3 // 1: Initiate, 2: Verify, 3: Complete
+  signupEmail: string | null
+  signupToken: string | null // Token from verify step
   signupSuccess: boolean
 }
 
 const initialState: AuthState = {
   user: null,
-  isAuthenticated: false,
+  isAuthenticated: !!token,
   isLoading: false,
   error: null,
+  
+  signupStep: 1,
+  signupEmail: null,
+  signupToken: null,
   signupSuccess: false,
 }
 
@@ -41,6 +50,17 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    resetAuth: (state) => {
+      state.isLoading = false
+      state.error = null
+      state.signupSuccess = false
+      state.signupStep = 1
+      state.signupEmail = null
+      state.signupToken = null
+    },
+    setSignupEmail: (state, action: PayloadAction<string>) => {
+      state.signupEmail = action.payload
+    }
   },
   extraReducers: (builder) => {
     // ========== LOGIN ==========
@@ -61,17 +81,48 @@ const authSlice = createSlice({
       state.error = action.payload
     })
 
-    // ========== SIGNUP ==========
-    builder.addCase(signupActions.types.REQUEST, (state) => {
+    // ========== SIGNUP STEP 1: INITIATE ==========
+    builder.addCase(initiateSignupActions.types.REQUEST, (state) => {
       state.isLoading = true
       state.error = null
     })
-    builder.addCase(signupActions.types.SUCCESS, (state) => {
+    builder.addCase(initiateSignupActions.types.SUCCESS, (state) => {
       state.isLoading = false
-      state.signupSuccess = true
+      state.signupStep = 2 // Move to OTP
       state.error = null
     })
-    builder.addCase(signupActions.types.FAILURE, (state, action: PayloadAction<string>) => {
+    builder.addCase(initiateSignupActions.types.FAILURE, (state, action: PayloadAction<string>) => {
+      state.isLoading = false
+      state.error = action.payload
+    })
+
+    // ========== SIGNUP STEP 2: VERIFY OTP ==========
+    builder.addCase(verifyOtpActions.types.REQUEST, (state) => {
+      state.isLoading = true
+      state.error = null
+    })
+    builder.addCase(verifyOtpActions.types.SUCCESS, (state, action: PayloadAction<any>) => {
+      state.isLoading = false
+      state.signupStep = 3 // Move to Password
+      state.signupToken = action.payload.signupToken
+      state.error = null
+    })
+    builder.addCase(verifyOtpActions.types.FAILURE, (state, action: PayloadAction<string>) => {
+      state.isLoading = false
+      state.error = action.payload
+    })
+
+    // ========== SIGNUP STEP 3: COMPLETE ==========
+    builder.addCase(completeSignupActions.types.REQUEST, (state) => {
+      state.isLoading = true
+      state.error = null
+    })
+    builder.addCase(completeSignupActions.types.SUCCESS, (state) => {
+      state.isLoading = false
+      state.signupSuccess = true // Done!
+      state.error = null
+    })
+    builder.addCase(completeSignupActions.types.FAILURE, (state, action: PayloadAction<string>) => {
       state.isLoading = false
       state.error = action.payload
     })
@@ -86,7 +137,7 @@ const authSlice = createSlice({
   },
 })
 
-export const { clearError } = authSlice.actions
+export const { clearError, resetAuth, setSignupEmail } = authSlice.actions
 
 export default authSlice.reducer
 
@@ -99,3 +150,6 @@ export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.
 export const selectIsLoading = (state: { auth: AuthState }) => state.auth.isLoading
 export const selectError = (state: { auth: AuthState }) => state.auth.error
 export const selectSignupSuccess = (state: { auth: AuthState }) => state.auth.signupSuccess
+export const selectSignupStep = (state: { auth: AuthState }) => state.auth.signupStep
+export const selectSignupEmail = (state: { auth: AuthState }) => state.auth.signupEmail
+export const selectSignupToken = (state: { auth: AuthState }) => state.auth.signupToken

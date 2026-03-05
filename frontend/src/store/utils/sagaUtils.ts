@@ -49,9 +49,10 @@ export function createApiActions<TPayload, TResponse>(baseType: string) {
       payload,
     }),
     
-    success: (payload: TResponse): PayloadAction<TResponse> => ({
+    success: (payload: TResponse, meta?: any): PayloadAction<TResponse> & { meta?: any } => ({
       type: `${baseType}${SUCCESS}`,
       payload,
+      meta
     }),
     
     failure: (payload: string): PayloadAction<string> => ({

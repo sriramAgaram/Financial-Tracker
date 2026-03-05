@@ -13,6 +13,7 @@ exports.add = async (req, res) => {
             .select('*')
             .eq("expense_name", createData.expense_name)
             .eq("user_id", createData.user_id)
+            .eq("ledger_id", createData?.ledger_id)
             .single();
 
         if (existingType) {
@@ -59,6 +60,7 @@ exports.update = async (req, res) => {
                 .select('*')
                 .eq('expense_name', updateFields.expense_name)
                 .eq('user_id', req.user.userId)
+                .eq('ledger_id', updateFields?.ledger_id)
                 .neq('expense_type_id', id)
                 .single();
 
@@ -85,13 +87,17 @@ exports.update = async (req, res) => {
 
 exports.lists = async (req, res) => {
     try {
+        const ledger_id = req.query.ledger_id || req.body.ledger_id || null;
+
         const { data, error } = await supabase
             .from('expense_type')
             .select('*')
-            .eq('user_id',req.user.userId)
+            .eq('user_id', req.user.userId)
+            .eq('ledger_id', ledger_id)
             .order('created_at', { ascending: false });
 
         if (error) {
+            console.error('Fetch Expense Types Error:', error);
             return res.status(500).json({ status: false, msg: 'Failed to fetch expense types', error });
         }
 

@@ -6,6 +6,10 @@ import homeReducer from '../features/home/redux/homeSlice'
 import listReducer from '../features/list/redux/listSlice'
 import settingsReducer from '../features/settings/redux/settingsSlice'
 import uiReducer from './uiSlice'
+import dashboardReducer from '../features/Dashboard/redux/dashboard.slice'
+import profileReducer from '../features/profile/redux/profileSlice'
+import ledgerReducer from '../features/ledger/redux/ledgerSlice'
+import { toastMiddleware } from './toastMiddleware'
 
 // Create the saga middleware
 const sagaMiddleware = createSagaMiddleware()
@@ -18,13 +22,16 @@ export const store = configureStore({
     list: listReducer,
     settings: settingsReducer,
     ui: uiReducer,
+    dashboard: dashboardReducer,
+    profile: profileReducer,
+    ledger: ledgerReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: ['persist/PERSIST'],
       },
-    }).concat(sagaMiddleware),
+    }).concat(sagaMiddleware, toastMiddleware),
 })
 
 // Run the root saga

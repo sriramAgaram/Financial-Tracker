@@ -5,7 +5,8 @@ import { createApiWorker } from '../../../store/utils/apiWorker'
 
 interface UpdateLimitPayload {
   daily_limit: number
-  monthly_limit: number
+  monthly_limit: number,
+  overall_amount: number
   id: number
 }
 
@@ -27,7 +28,7 @@ const updateLimitApi = async (payload: UpdateLimitPayload) => {
 
 
 const fetchLimitWorker = createApiWorker(LimitFetchActions, fetchLimitApi)
-const updateLimitWorker = createApiWorker(settingsUpdateActions, updateLimitApi, undefined, () => LimitFetchActions.request())
+const updateLimitWorker = createApiWorker(settingsUpdateActions, updateLimitApi, undefined, () => LimitFetchActions.request(), 'Settings Saved!')
 
 function* settingsWatcher() {
   yield takeEvery(LimitFetchActions.types.REQUEST, fetchLimitWorker)

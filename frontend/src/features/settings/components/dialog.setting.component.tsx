@@ -21,6 +21,7 @@ export const SettingDialog = ({ visible, data, setvisible }: { visible: boolean,
             dispatch(updateExpenseTypeActions.request({ id: value.expense_type_id, name: value.expense_name }));
             setvisible(false);
         }
+
     };
 
     const footerContent = (

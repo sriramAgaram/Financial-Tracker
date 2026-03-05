@@ -22,7 +22,7 @@ const GlobalToast = () => {
         }
     }, [toastState, dispatch]);
 
-    return <Toast ref={toast} />;
+    return <Toast ref={toast} position="top-right" className="w-full max-w-[90vw] sm:max-w-100 left-[5vw] sm:left-auto" />;
 };
 
 export default GlobalToast;

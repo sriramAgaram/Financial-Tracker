@@ -84,26 +84,39 @@ exports.update = async (req, res) => {
 
 exports.lists = async (req, res) => {
     try {
-        const { pageNumber, rows } = req.body;
+        const { pageNumber, rows, category } = req.body;
         const from = (pageNumber - 1) * rows;
         const to = from + rows - 1;
 
-        const { data, error, count } = await supabase
+        let query = supabase
             .from('transactions')
-            .select(`*, 
-                expense_type(
-                expense_name
-                )`, { count: 'exact' }
-            )
-            .eq('user_id' , req.user.userId)
-            .order('created_at', { ascending: false })
+            .select(`
+                transaction_id,
+                amount,
+                date,
+                expense_type_id,
+                user_id,
+                ledger_id
+            `, { count: 'estimated' })
+            
+            .eq('user_id', req.user.userId)
+            .eq('ledger_id', req.body?.ledger_id || req.query?.ledger_id || null)
+            
+            
+        if(category && category.length > 0){
+            query = query.in('expense_type_id', category)
+        }
+
+        const { data, error, count } = await query
+            .order('date', { ascending: false })
             .range(from, to);
 
         if (error) {
+            console.error('Fetch Transactions Error:', error);
             return res.status(500).json({
                 status: false,
                 msg: 'Failed to fetch transactions',
-                error: error.message
+                error: error
             });
         }
 
@@ -151,6 +164,7 @@ exports.lists = async (req, res) => {
 //             error: error.message
 //         });
 //     }
+//     }
 // }
 
 exports.delete = async (req, res) => {
@@ -193,3 +207,58 @@ exports.delete = async (req, res) => {
         });
     }
 }
+
+exports.weeklyData = async (req, res) => {
+    try {
+        const { fromDate, toDate } = req.body;
+        
+        const ledger_id = req.body.ledger_id || req.query.ledger_id || null;
+
+        const { data, error } = await supabase.rpc('get_daily_totals', {
+            p_user_id: req.user.userId,
+            p_ledger_id: ledger_id,
+            p_from_date: fromDate,
+            p_to_date: toDate
+        });
+
+        const { data: limitData, error: limitError } = await supabase.from('amount_limit')
+            .select('daily_limit')
+            .eq('user_id', req.user.userId)
+            .eq('ledger_id', ledger_id)
+            .single();
+
+
+        if(limitError){
+            return res.status(400).json({limitError: limitError.message})
+        }
+
+        if (error) {
+            console.error('Weekly Data RPC Error:', error);
+            return res.status(400).json({ error: error });
+        }
+
+        // Extract arrays for chart
+        const chartData = data.map(day => day.total_amount);
+        const labels = data.map(day => day.transaction_date);
+
+        const overExpenseChartData = data.map(day => 
+            (limitData && day.total_amount > limitData.daily_limit) ? day.total_amount : null
+        );
+        const overExpenseLabels = data.map(day => day.transaction_date);
+
+        const totalAmount = chartData.reduce((sum, val) => sum + val, 0);
+
+        return res.status(200).json({
+            status: true,
+            msg: "Transaction Fetched successfully",
+            overExpenseChartData,
+            overExpenseLabels,
+            chartData,      
+            labels,      
+            totalAmount
+        });
+
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};

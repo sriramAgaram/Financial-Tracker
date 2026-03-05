@@ -1,26 +1,29 @@
 import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import {selectExpenseTypes, selectDashboardData } from './redux/homeSlice';
+import { useDispatch } from 'react-redux'
+import { selectDashboardData } from './redux/homeSlice';
 import { InputText } from "primereact/inputtext";
 import { FloatLabel } from "primereact/floatlabel";
 import { Dropdown } from 'primereact/dropdown';
-import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { useAppSelector } from '../../hooks/useAppSelector';
-import { addTransactionActions, expenseTypeActions, homeDataActions } from './redux/homeSagas';
+import { addTransactionActions, homeDataActions } from './redux/homeSagas';
+import { useExpenseTypes } from '../../hooks/useExpenseTypes';
+import { Calendar } from 'primereact/calendar';
+import { showToast } from '../../store/uiSlice';
+import { format } from 'date-fns';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch();
-  const expenseTypes = useSelector(selectExpenseTypes);
-  const amountData = useAppSelector(selectDashboardData)
+  const amountData = useAppSelector(selectDashboardData);
+  const expenseTypes = useExpenseTypes();
   const [data, setData] = useState({
     expences_type_id: null,
-    amount: 0
+    amount: 0,
+    date: new Date()
   });
 
   useEffect(() => {
     dispatch(homeDataActions.request())
-    dispatch(expenseTypeActions.request())
   }, [])
 
   const handleChange = (e: any) => {
@@ -35,22 +38,35 @@ const HomePage: React.FC = () => {
 
     setData(prev => ({
       ...prev,
-      [name]: name === 'amount' ? parseFloat(value) || 0 : value
+      [name]: name === 'amount' ? Number.parseFloat(value) || 0 : value
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (data.expences_type_id && data.amount > 0) {
+    if (data.expences_type_id && data.amount > 0 && data.date) {
+
+      const currentBalance = amountData?.balanceDailyAmt || 0;
+      if (data.amount > currentBalance) {
+        dispatch(showToast({
+          severity: 'warn',
+          summary: 'Daily Limit Exceeded',
+          detail: 'This transaction exceeds your daily limit!',
+          life: 4000
+        }))
+      }
+
       dispatch(addTransactionActions.request({
         expense_type_id: data.expences_type_id,
-        amount: data.amount
+        amount: data.amount,
+        date: data.date ? format(data.date, 'yyyy-MM-dd') : ''
       }));
       setData({
         expences_type_id: null,
-        amount: 0
+        amount: 0,
+        date: new Date()
       })
-      dispatch(homeDataActions.request())
+      dispatch(homeDataActions.request());
     }
   };
 
@@ -63,7 +79,7 @@ const HomePage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-default">
-          <h2 className="text-lg font-semibold text-heading mb-2">Total Balance</h2>
+          <h2 className="text-lg font-semibold text-heading mb-2">Daily Expenses</h2>
           <p className="text-3xl font-bold text-fg-brand">₹{amountData?.balanceDailyAmt}</p>
         </div>
 
@@ -73,52 +89,52 @@ const HomePage: React.FC = () => {
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-default">
-          <h2 className="text-lg font-semibold text-heading mb-2">Savings</h2>
-          <p className="text-3xl font-bold text-fg-success">₹0.00</p>
+          <h2 className="text-lg font-semibold text-heading mb-2">Total Balance</h2>
+          <p className="text-3xl font-bold text-fg-success">₹{amountData?.balanceOverallAmt}</p>
         </div>
       </div>
 
-       <div className='flex w-full justify-center items-center pt-20'>
-          <Card title="Add New Transaction" className="w-full max-w-md">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div>
-                <FloatLabel>
-                  <InputText
-                    id="amount"
-                    name="amount"
-                    value={data.amount.toString()}
-                    onChange={handleChange}
-                    className="w-full"
-                    keyfilter="num"
-                  />
-                  <label htmlFor="amount">Amount (₹)</label>
-                </FloatLabel>
-              </div>
+      <div className='flex w-full justify-center items-center pt-20'>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-9">
+          <Calendar value={data.date} onChange={(e: any) => handleChange({ target: { name: 'date', value: e.value } })} dateFormat="dd/mm/yy" />
 
-              <div>
-                <Dropdown
-                  name="expences_type_id"
-                  value={data.expences_type_id}
-                  onChange={handleChange}
-                  options={expenseTypes}
-                  optionLabel="expense_name"
-                  optionValue="expense_type_id"
-                  placeholder="Select Expense Type"
-                  className="w-full"
-                  showClear
-                />
-              </div>
-
-              <Button
-                type="submit"
-                label="Add Transaction"
-                icon="pi pi-plus"
-                className="w-full mt-2"
-                disabled={!data.expences_type_id || data.amount <= 0}
+          <div>
+            <FloatLabel>
+              <InputText
+                id="amount"
+                name="amount"
+                value={data.amount.toString()}
+                onChange={handleChange}
+                className="w-full"
+                keyfilter="num"
               />
-            </form>
-          </Card>
-        </div>
+              <label htmlFor="amount">Amount (₹)</label>
+            </FloatLabel>
+          </div>
+
+          <div>
+            <Dropdown
+              name="expences_type_id"
+              value={data.expences_type_id}
+              onChange={handleChange}
+              options={expenseTypes || []}
+              optionLabel="expense_name"
+              optionValue="expense_type_id"
+              placeholder="Select Expense Type"
+              className="w-full"
+              showClear
+            />
+          </div>
+
+          <Button
+            type="submit"
+            label="Add Transaction"
+            icon="pi pi-plus"
+            className="w-full mt-2"
+            disabled={!data.expences_type_id || data.amount <= 0}
+          />
+        </form>
+      </div>
     </div>
   )
 }
