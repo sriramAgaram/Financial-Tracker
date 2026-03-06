@@ -19,7 +19,9 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "db:types": "supabase gen types typescript --https://imuaogovcfxpnvufgmpn.supabase.co --schema public > src/types/database.types.ts",
+    "dev": "npm run db:types && next dev"
   },
   "author": "",
   "license": "ISC",

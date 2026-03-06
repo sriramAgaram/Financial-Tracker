@@ -56,6 +56,8 @@ exports.update = async (req, res) => {
         const updateData = req.body;
         updateData['user_id'] = req.user.userId
 
+        console.log(updateData);
+
         // Pick only allowed fields for update
         const updateFields = limitModel.getLimitForUpdate(updateData);
 
@@ -64,6 +66,7 @@ exports.update = async (req, res) => {
             .from('amount_limit')
             .select('*')
             .eq('limit_id', id)
+            .eq('ledger_id', updateData.ledger_id)
             .eq('user_id', req.user.userId)
             .single();
 
@@ -79,6 +82,7 @@ exports.update = async (req, res) => {
             .from('amount_limit')
             .update(updateFields)
             .eq('limit_id', id)
+            .eq('ledger_id', updateData.ledger_id)
             .select();
 
         if (updateError) {
