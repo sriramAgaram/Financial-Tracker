@@ -15,7 +15,8 @@ interface ListState {
   error: string | null,
   updateSuccess: boolean,
   deleteSuccess: boolean,
-  totalRecords: number
+  totalRecords: number,
+  filteredTotal: number
 }
 
 
@@ -25,7 +26,8 @@ const initialState:ListState  = {
   error: null,
   totalRecords: 0,
   updateSuccess: false,
-  deleteSuccess: false
+  deleteSuccess: false,
+  filteredTotal: 0
 }
 
 
@@ -38,10 +40,15 @@ const createListSlice = createSlice({
       state.loading = true
       state.error = null
     })
-    builder.addCase(listTransactionActions.types.SUCCESS, (state, action: PayloadAction<{data: ResponseOfTransaction[], total_count: number}>)=>{
+    builder.addCase(listTransactionActions.types.SUCCESS, (state, action: PayloadAction<{
+      data: ResponseOfTransaction[], 
+      total_count: number,
+      filtered_total: number
+    }>)=>{
       state.loading= false
       state.transactions = action.payload.data
       state.totalRecords = action.payload.total_count
+      state.filteredTotal = action.payload.filtered_total
       state.error = null
     })
     builder.addCase(listTransactionActions.types.FAILURE, (state, action: PayloadAction<string>)=>{
@@ -82,5 +89,6 @@ export const selectLoading = (state: {list: ListState}) => state.list.loading
 export const selectError = (state: {list: ListState}) => state.list.error
 export const selectTransactionsList = (state: {list: ListState}) => state.list.transactions;
 export const selectTotalCount = (state: {list: ListState}) =>state.list.totalRecords
+export const selectFilteredTotal = (state: {list: ListState}) => state.list.filteredTotal
 export const selectUpdateSuccess = (state: {list: ListState}) =>state.list.updateSuccess
 export const selectDeleteSuccess = (state: {list: ListState}) =>state.list.deleteSuccess
