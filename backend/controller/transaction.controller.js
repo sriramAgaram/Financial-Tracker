@@ -84,9 +84,11 @@ exports.update = async (req, res) => {
 
 exports.lists = async (req, res) => {
     try {
-        const { pageNumber, rows, category } = req.body;
+        const { pageNumber, rows, category, fromDate, toDate } = req.body;
         const from = (pageNumber - 1) * rows;
         const to = from + rows - 1;
+        const user_id = req.user.userId;
+        const ledger_id = req.body?.ledger_id || req.query?.ledger_id || null;
 
         let query = supabase
             .from('transactions')
@@ -97,14 +99,19 @@ exports.lists = async (req, res) => {
                 expense_type_id,
                 user_id,
                 ledger_id
-            `, { count: 'estimated' })
-            
-            .eq('user_id', req.user.userId)
-            .eq('ledger_id', req.body?.ledger_id || req.query?.ledger_id || null)
-            
-            
-        if(category && category.length > 0){
-            query = query.in('expense_type_id', category)
+            `, { count: 'exact' })
+            .eq('user_id', user_id)
+            .eq('ledger_id', ledger_id);
+
+        if (category && category.length > 0) {
+            query = query.in('expense_type_id', category);
+        }
+
+        if (fromDate) {
+            query = query.gte('date', fromDate);
+        }
+        if (toDate) {
+            query = query.lte('date', toDate);
         }
 
         const { data, error, count } = await query
@@ -120,11 +127,32 @@ exports.lists = async (req, res) => {
             });
         }
 
+// Calculate Filtered Total (Sum of all records matching the filters)
+        let totalQuery = supabase
+            .from('transactions')
+            .select('amount')
+            .eq('user_id', user_id)
+            .eq('ledger_id', ledger_id);
+
+        if (category && category.length > 0) {
+            totalQuery = totalQuery.in('expense_type_id', category);
+        }
+        if (fromDate) {
+            totalQuery = totalQuery.gte('date', fromDate);
+        }
+        if (toDate) {
+            totalQuery = totalQuery.lte('date', toDate);
+        }
+
+        const { data: totalData, error: totalError } = await totalQuery;
+        const filtered_total = totalData?.reduce((sum, item) => sum + item.amount, 0) || 0;
+
         res.status(200).json({
             status: true,
             msg: "Transactions fetched successfully",
             data,
-            total_count: count
+            total_count: count,
+            filtered_total
         });
     } catch (error) {
         res.status(500).json({

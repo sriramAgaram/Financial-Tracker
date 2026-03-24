@@ -13,7 +13,7 @@ const validate = (schema) => (req, res, next) => {
             return res.status(400).json({
                 status: false,
                 msg: 'Validation Error',
-                errors: error.errors.map(err => ({
+                errors: error.issues.map(err => ({
                     path: err.path.join('.'),
                     message: err.message
                 }))

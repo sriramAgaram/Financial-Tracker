@@ -74,12 +74,6 @@ exports.homedata = async (req, res) => {
         // Defensive check: req.body and req.query might be undefined in some environments
         const ledgerId = req.body?.ledger_id || req.query?.ledger_id;
 
-        console.log('--- DEBUG HOMEDATA ---');
-        console.log('User ID:', userId);
-        console.log('Ledger ID:', ledgerId);
-        console.log('Body:', req.body);
-        console.log('Query:', req.query);
-
         if (!userId) {
             return res.status(400).json({
                 status: false,
@@ -128,12 +122,24 @@ exports.homedata = async (req, res) => {
                 .gte('date', startToday.toISOString())
                 .lt('date', startTomorrow.toISOString());
 
-            if (monthlyError || dailyError) {
-                throw monthlyError || dailyError;
+            // Get previous month transactions for THIS ledger
+            const startPrevMonth = startOfMonth(addMonths(now, -1));
+            
+            const { data: prevMonthlyTransactions, error: prevMonthlyError } = await supabase
+                .from('transactions')
+                .select('amount')
+                .eq('user_id', userId)
+                .eq('ledger_id', ledgerId)
+                .gte('date', startPrevMonth.toISOString())
+                .lt('date', startMonth.toISOString());
+
+            if (monthlyError || dailyError || prevMonthlyError) {
+                throw monthlyError || dailyError || prevMonthlyError;
             }
 
             const monthlySum = monthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
             const dailySum = dailyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
+            const prevMonthSum = prevMonthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
 
             let balanceMonthlyAmt = limitData.monthly_limit - monthlySum;
             let balanceDailyAmt = limitData.daily_limit - dailySum;
@@ -150,11 +156,12 @@ exports.homedata = async (req, res) => {
                     monthlyLimit: limitData.monthly_limit, 
                     balanceOverallAmt,
                     currentExpense: monthlySum,
-                    currentDailyExpense: dailySum
+                    currentDailyExpense: dailySum,
+                    prevMonthSum
                 }
             });
         } else {
-            res.status(404).json({ status: false, msg: 'Limit data not found for this ledger' });
+            res.status(404).json({ status: false, msg: 'Limit data not found for this ledger', limitError });
         }
 
     } catch (error) {

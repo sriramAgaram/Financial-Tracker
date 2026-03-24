@@ -8,7 +8,10 @@ interface HomeState {
     balanceMonthlyAmt: 0,
     dailyLimit:0,
     monthlyLimit:0,
-    balanceOverallAmt: 0
+    balanceOverallAmt: 0,
+    currentExpense?: number,
+    currentDailyExpense?: number,
+    prevMonthSum?: number
   } | null
   expenseTypes: any[] | null
   isLoading: boolean

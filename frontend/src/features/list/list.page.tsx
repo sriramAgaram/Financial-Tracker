@@ -2,24 +2,25 @@ import { useEffect, useState, lazy, Suspense, useCallback, useMemo } from "react
 import { useDispatch } from "react-redux"
 import { deleteTransactionActions, listTransactionActions } from "./redux/listSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
-import { selectDeleteSuccess, selectTotalCount, selectTransactionsList, selectUpdateSuccess } from "./redux/listSlice";
+import { selectDeleteSuccess, selectFilteredTotal, selectTotalCount, selectTransactionsList, selectUpdateSuccess } from "./redux/listSlice";
 import { format } from "date-fns";
 import { Paginator } from 'primereact/paginator';
 import { Button } from 'primereact/button';
 import { confirmDialog } from 'primereact/confirmdialog';
 import { MultiSelect } from 'primereact/multiselect';
+import { Calendar } from 'primereact/calendar';
 import { useExpenseTypes } from "../../hooks/useExpenseTypes";
 
 const EditSettingPopup = lazy(() => import("./components/EditListPopup.list").then(module => ({ default: module.EditSettingPopup })));
 
 const ListPage = () => {
-  const [pagenateData, setPagenateDate] = useState({
+  const [pagenateData, setPagenateData] = useState({
     pageNumber: 1,
     rows: 5,
     totalRecords: 120
   });
 
-  const [searchForm , setSearchForm] = useState({
+  const [searchForm , setSearchForm] = useState<{category: any[], dateRange: any}>({
     category: [],
     dateRange: null
   })
@@ -40,7 +41,7 @@ const ListPage = () => {
   }, []);
 
   const onPageChange = useCallback((e: any) => {
-    setPagenateDate((prev) => ({
+    setPagenateData((prev) => ({
       ...prev,
       pageNumber: e.page + 1,
       rows: e.rows
@@ -49,10 +50,20 @@ const ListPage = () => {
 
   const dispatch = useDispatch();
   const transactions = useAppSelector(selectTransactionsList);
-  const totalCount = useAppSelector(selectTotalCount)
-
+  const totalCount = useAppSelector(selectTotalCount);
+  const filteredTotal = useAppSelector(selectFilteredTotal);
   useEffect(() => {
-    dispatch(listTransactionActions.request({...pagenateData , category: searchForm.category}));
+    const payload: any = {
+      ...pagenateData,
+      category: searchForm.category
+    };
+
+    if (searchForm.dateRange?.[0] && searchForm.dateRange?.[1]) {
+      payload.fromDate = searchForm.dateRange[0].toISOString().split('T')[0];
+      payload.toDate = searchForm.dateRange[1].toISOString().split('T')[0];
+    }
+
+    dispatch(listTransactionActions.request(payload));
   }, [pagenateData , updateSuccess, deleteSuccess, searchForm])
 
   const paginatorTemplate = useMemo(() => isMobile 
@@ -74,47 +85,41 @@ const ListPage = () => {
         
         <div className="max-w-3xl mx-auto">
           
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            {/* Left Side: Title & Count */}
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Transactions</h2>
-              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
-                 {totalCount} Total
-              </span>
-               {/* Reset Button */}
-             <Button 
-                icon="pi pi-refresh" 
-                rounded 
-                outlined
-                severity="secondary"
-                aria-label="Reset"
-                className="w-full sm:w-5 h-5 border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 bg-white shadow-sm transition-all"
-                onClick={() => setSearchForm({ category: [], dateRange: null })}
-                tooltip="Reset Filters"
-                tooltipOptions={{ position: 'top' }}
-            />
+          {/* Dashboard Summary Header */}
+          <div className="mb-8">
+            <div className="max-w-md mx-auto bg-white/40 backdrop-blur-md border border-white/60 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)]">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Spending</p>
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                    ₹{filteredTotal.toLocaleString('en-IN')}
+                  </h2>
+                </div>
+                <div className="bg-indigo-50 p-2.5 rounded-2xl">
+                  <i className="pi pi-wallet text-indigo-500 text-xl font-bold"></i>
+                </div>
+              </div>
             </div>
-
-            {/* Right Side: Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              
-              {/* Date Filter */}
-              {/* <div className="w-full sm:w-auto relative group">
+          </div>
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+               {/* Date Filter */}
+               <div className="w-full sm:w-1/2">
                 <Calendar 
                     value={searchForm.dateRange} 
                     onChange={(e) => setSearchForm(prev => ({ ...prev, dateRange: e.value }))} 
                     selectionMode="range" 
                     readOnlyInput 
                     placeholder="Date Range"
-                    className="w-full sm:w-52"
-                    inputClassName="w-full pl-10 pr-4 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg hover:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all shadow-sm"
-                    showIcon
-                    icon="pi pi-calendar"
+                    className="w-full"
+                    inputClassName="w-full h-11 pl-10 pr-4 text-sm text-slate-700 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm"
+                    showIcon={false}
                 />
-              </div> */}
+              </div>
 
                {/* Category Filter */}
-              <div className="w-full sm:w-auto">
+               <div className="w-full sm:w-1/2">
                 <MultiSelect 
                     value={searchForm.category} 
                     onChange={(e) => setSearchForm(prev => ({ ...prev , category: e.value}))} 
@@ -124,18 +129,17 @@ const ListPage = () => {
                     optionLabel="expense_name" 
                     optionValue="expense_type_id"
                     display="chip"
-                    placeholder="Categories" 
+                    placeholder="All Categories" 
                     maxSelectedLabels={1} 
-                    className="w-full sm:w-60" 
-                    selectedItemsLabel="{0} Selected"
+                    className="w-full" 
                     pt={{
-                        root: { className: 'w-full border border-slate-200 rounded-lg hover:border-indigo-300 focus:border-indigo-400 transition-all shadow-sm bg-white' },
-                        label: { className: 'p-2 text-sm text-slate-700' }
+                        root: { className: 'w-full h-11 border border-slate-200 rounded-xl hover:border-indigo-300 focus:border-indigo-400 transition-all shadow-sm bg-white overflow-hidden' },
+                        label: { className: 'p-2.5 text-sm text-slate-700 font-medium' },
+                        token: { className: 'bg-indigo-50 text-indigo-700 rounded-lg border-none' }
                     }}
                 />
+               </div>
             </div>
-            
-           
           </div>
           </div>
 
@@ -220,7 +224,6 @@ const ListPage = () => {
             })}
           </div>
         </div>
-      </div>
 
 
       {/* Fixed Paginator Footer */}

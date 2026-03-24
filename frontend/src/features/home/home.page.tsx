@@ -77,14 +77,32 @@ const HomePage: React.FC = () => {
         This is the main dashboard where you can see an overview of your financial data.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-default">
+          <h2 className="text-lg font-semibold text-heading mb-2">Spent This Month</h2>
+          <div className="flex items-end gap-3">
+            <p className="text-3xl font-bold text-slate-800">₹{amountData?.currentExpense || 0}</p>
+            {amountData?.prevMonthSum !== undefined && (
+              <span className={`flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-lg mb-1 ${
+                ((amountData.currentExpense || 0) > amountData.prevMonthSum) ? 'text-rose-600 bg-rose-50' : 'text-emerald-600 bg-emerald-50'
+              }`}>
+                <i className={`pi pi-arrow-${((amountData.currentExpense || 0) > amountData.prevMonthSum) ? 'up' : 'down'} text-[12px]`}></i>
+                {Math.abs((amountData.currentExpense || 0) - amountData.prevMonthSum).toLocaleString('en-IN')}
+              </span>
+            )}
+          </div>
+          <p className="text-xs font-semibold text-slate-400 mt-2">
+            vs ₹{(amountData?.prevMonthSum || 0).toLocaleString('en-IN')} last month
+          </p>
+        </div>
+
         <div className="bg-white p-6 rounded-lg shadow-sm border border-default">
           <h2 className="text-lg font-semibold text-heading mb-2">Daily Expenses</h2>
           <p className="text-3xl font-bold text-fg-brand">₹{amountData?.balanceDailyAmt}</p>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-default">
-          <h2 className="text-lg font-semibold text-heading mb-2">Monthly Expenses</h2>
+          <h2 className="text-lg font-semibold text-heading mb-2">Monthly limit Bal</h2>
           <p className="text-3xl font-bold text-fg-danger">₹{amountData?.balanceMonthlyAmt}</p>
         </div>
 
