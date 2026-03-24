@@ -4,13 +4,15 @@ exports.getExpenseTypeForCreate = (fields) => {
     return _.pick(fields, [
         'expense_name',
         'ledger_id',
-        'user_id'
+        'user_id',
+        'type'
     ]);
 };
 
 exports.getExpenseTypeForUpdate = (fields) => {
     return _.pick(fields, [
         'expense_name',
-        'ledger_id'
+        'ledger_id',
+        'type'
     ]);
 };

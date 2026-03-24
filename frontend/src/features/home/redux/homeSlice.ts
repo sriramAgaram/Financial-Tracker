@@ -10,6 +10,7 @@ interface HomeState {
     monthlyLimit:0,
     balanceOverallAmt: 0,
     currentExpense?: number,
+    currentIncome?: number,
     currentDailyExpense?: number,
     prevMonthSum?: number
   } | null

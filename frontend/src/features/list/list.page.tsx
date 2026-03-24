@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux"
 import { deleteTransactionActions, listTransactionActions } from "./redux/listSagas";
 import { useAppSelector } from "../../hooks/useAppSelector";
 import { selectDeleteSuccess, selectFilteredTotal, selectTotalCount, selectTransactionsList, selectUpdateSuccess } from "./redux/listSlice";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { Paginator } from 'primereact/paginator';
 import { Button } from 'primereact/button';
 import { confirmDialog } from 'primereact/confirmdialog';
@@ -20,10 +20,19 @@ const ListPage = () => {
     totalRecords: 120
   });
 
+  const getDefaultDateRange = useCallback(() => [startOfMonth(new Date()), new Date()], []);
+  
   const [searchForm , setSearchForm] = useState<{category: any[], dateRange: any}>({
     category: [],
-    dateRange: null
+    dateRange: getDefaultDateRange()
   })
+
+  const handleReset = () => {
+    setSearchForm({
+      category: [],
+      dateRange: getDefaultDateRange()
+    });
+  };
   const updateSuccess = useAppSelector(selectUpdateSuccess);
   const deleteSuccess = useAppSelector(selectDeleteSuccess);
 
@@ -92,7 +101,7 @@ const ListPage = () => {
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Spending</p>
                   <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-                    ₹{filteredTotal.toLocaleString('en-IN')}
+                    ₹{filteredTotal}
                   </h2>
                 </div>
                 <div className="bg-indigo-50 p-2.5 rounded-2xl">
@@ -139,6 +148,16 @@ const ListPage = () => {
                     }}
                 />
                </div>
+
+               {/* Reset Button */}
+               <div className="w-full sm:w-auto">
+                 <Button 
+                   icon="pi pi-refresh" 
+                   label="Reset"
+                   onClick={handleReset} 
+                   className="w-full h-11 px-6 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-indigo-300 transition-all shadow-sm font-medium"
+                 />
+               </div>
             </div>
           </div>
           </div>
@@ -171,10 +190,12 @@ const ListPage = () => {
 
                     <div className="flex flex-col items-end gap-2">
                         <div className="text-right">
-                            <div className="font-bold text-slate-800 text-lg tracking-tight group-hover:text-red-600 transition-colors">
-                                - ₹{item.amount.toLocaleString('en-IN')}
+                            <div className={`font-bold text-lg tracking-tight transition-colors ${item.transaction_type === 'CREDIT' ? 'text-emerald-600 group-hover:text-emerald-500' : 'text-slate-800 group-hover:text-rose-600'}`}>
+                                {item.transaction_type === 'CREDIT' ? '+' : '-'} ₹{item.amount}
                             </div>
-                            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Debit</span>
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${item.transaction_type === 'CREDIT' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                {item.transaction_type === 'CREDIT' ? 'Credit' : 'Debit'}
+                            </span>
                         </div>
 
                         {/* Action Buttons - Always Visible now */}

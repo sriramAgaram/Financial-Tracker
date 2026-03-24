@@ -98,7 +98,8 @@ exports.lists = async (req, res) => {
                 date,
                 expense_type_id,
                 user_id,
-                ledger_id
+                ledger_id,
+                transaction_type
             `, { count: 'exact' })
             .eq('user_id', user_id)
             .eq('ledger_id', ledger_id);
@@ -127,25 +128,19 @@ exports.lists = async (req, res) => {
             });
         }
 
-// Calculate Filtered Total (Sum of all records matching the filters)
-        let totalQuery = supabase
-            .from('transactions')
-            .select('amount')
-            .eq('user_id', user_id)
-            .eq('ledger_id', ledger_id);
+        // Calculate Filtered Total using RPC for better performance
+        const { data: filtered_total, error: totalError } = await supabase
+            .rpc('get_filtered_total', {
+                p_user_id: user_id,
+                p_ledger_id: ledger_id,
+                p_categories: category && category.length > 0 ? category : null,
+                p_from_date: fromDate || null,
+                p_to_date: toDate || null
+            });
 
-        if (category && category.length > 0) {
-            totalQuery = totalQuery.in('expense_type_id', category);
+        if (totalError) {
+            console.error('Fetch Filtered Total Error:', totalError);
         }
-        if (fromDate) {
-            totalQuery = totalQuery.gte('date', fromDate);
-        }
-        if (toDate) {
-            totalQuery = totalQuery.lte('date', toDate);
-        }
-
-        const { data: totalData, error: totalError } = await totalQuery;
-        const filtered_total = totalData?.reduce((sum, item) => sum + item.amount, 0) || 0;
 
         res.status(200).json({
             status: true,

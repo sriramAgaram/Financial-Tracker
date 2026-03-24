@@ -7,7 +7,8 @@ exports.getTransactionFields = (fields) =>{
     'ledger_id',
     'expense_type_id',
     'amount',
-    'date'
+    'date',
+    'transaction_type'
    ])
 }
 

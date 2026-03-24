@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from "primereact/button";
+import { SelectButton } from 'primereact/selectbutton';
 import { useDispatch } from "react-redux";
 import { deleteExpenseTypeActions, addExpenseTypeActions } from "../../home/redux/homeSagas";
 import { SettingDialog } from "./dialog.setting.component";
@@ -13,6 +14,7 @@ export default function DropdownSettingComponent() {
     const [data, setData] = useState('');
     const [editName, setEditName] = useState('');
     const [addName, setAddName] = useState('');
+    const [addType, setAddType] = useState('DEBIT');
     const [visible, setVisible] = useState(false)
     const expenstTypeOptions = useExpenseTypes();
     const dispatch = useDispatch();
@@ -49,7 +51,7 @@ export default function DropdownSettingComponent() {
     const handleAdd = (e: React.FormEvent) => {
         e.preventDefault()
         if (!addName.trim()) return;
-        dispatch(addExpenseTypeActions.request({ expense_name: addName }))
+        dispatch(addExpenseTypeActions.request({ expense_name: addName, type: addType }))
         setAddName('');
     }
 
@@ -69,7 +71,14 @@ export default function DropdownSettingComponent() {
     const typeOptionTemplate = (option: any) => {
         return (
             <div className="flex items-center justify-between w-full px-2 py-1 group">
-                <div className="font-medium text-gray-700 truncate max-w-[150px] md:max-w-xs" title={option.expense_name}>{option.expense_name}</div>
+                <div className="flex flex-col">
+                    <div className="font-medium text-gray-700 truncate max-w-[150px] md:max-w-xs" title={option.expense_name}>
+                        {option.expense_name}
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase ${option.type === 'CREDIT' ? 'text-emerald-500' : 'text-slate-400'}`}>
+                        {option.type || 'DEBIT'}
+                    </span>
+                </div>
                 <div className="flex gap-2">
                     <Button
                         icon="pi pi-pencil"
@@ -111,18 +120,29 @@ export default function DropdownSettingComponent() {
                 />
             </div>
 
-            <form onSubmit={handleAdd} className="flex flex-col md:flex-row gap-3 w-full">
-                <InputText
-                    value={addName}
-                    onChange={(e) => setAddName(e.target.value)}
-                    placeholder="Add New Expense Type"
-                    className="w-full md:flex-1"
-                />
+            <form onSubmit={handleAdd} className="flex flex-col gap-3 w-full">
+                <div className="flex flex-col md:flex-row gap-3">
+                    <InputText
+                        value={addName}
+                        onChange={(e) => setAddName(e.target.value)}
+                        placeholder="Add New Category Name"
+                        className="w-full md:flex-1"
+                    />
+                    <SelectButton 
+                        value={addType} 
+                        onChange={(e) => setAddType(e.value || 'DEBIT')} 
+                        options={[
+                            { label: 'Debit', value: 'DEBIT' },
+                            { label: 'Credit', value: 'CREDIT' }
+                        ]} 
+                        className="white-space-nowrap"
+                    />
+                </div>
                 <Button
-                    label="Add"
+                    label="Add Category"
                     icon="pi pi-plus"
                     type="submit"
-                    className="w-full md:w-auto px-6 whitespace-nowrap"
+                    className="w-full"
                 />
             </form>
 

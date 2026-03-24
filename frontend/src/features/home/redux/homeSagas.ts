@@ -9,8 +9,8 @@ interface HomedataResponse {
 }
 export const homeDataActions = createApiActions<void, HomedataResponse>('home/homeData');
 export const expenseTypeActions = createApiActions<void, any[]>('home/expenseType');
-export const addTransactionActions = createApiActions<{ expense_type_id: number, amount: number,date: string }, void>('home/addTransaction');
-export const addExpenseTypeActions = createApiActions<{ expense_name: string }, void>('home/addExpenseType');
+export const addTransactionActions = createApiActions<{ expense_type_id: number, amount: number,date: string, transaction_type: string }, void>('home/addTransaction');
+export const addExpenseTypeActions = createApiActions<{ expense_name: string, type: string }, void>('home/addExpenseType');
 export const updateExpenseTypeActions = createApiActions<{ id: number, name: string }, void>('home/updateExpenseType');
 export const deleteExpenseTypeActions = createApiActions<number, void>('home/deleteExpenseType');
 const homeDataApi = async () => {
@@ -29,7 +29,7 @@ const addTransactionApi =  async (data: { expense_type_id: number, amount: numbe
 }
 
 // Expense Type Management APIs
-const addExpenseTypeApi = async (data: { expense_name: string }) => {
+const addExpenseTypeApi = async (data: { expense_name: string, type: string }) => {
   const response = await apiClient.post('/expencestype/add', data);
   return response.data;
 }
