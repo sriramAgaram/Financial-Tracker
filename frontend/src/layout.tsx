@@ -11,7 +11,7 @@ const Layout: React.FC<LayoutProps> = ({ pageTitle }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen overflow-hidden bg-gray-50 flex flex-col">
       <SideBar 
         isMobileOpen={isMobileSidebarOpen} 
         onClose={() => setIsMobileSidebarOpen(false)} 
@@ -30,12 +30,13 @@ const Layout: React.FC<LayoutProps> = ({ pageTitle }) => {
         />
       )}
 
-      <main className="pt-20 px-4 sm:px-6 lg:px-8 pb-8 transition-all duration-300 sm:pl-72">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 overflow-y-auto pt-20 px-4 sm:px-6 lg:px-8 pb-8 transition-all duration-300 sm:ml-64">
+        <div className="max-w-7xl mx-auto h-full">
             <Outlet/>
         </div>
       </main>
     </div>
+
   )
 }
 
