@@ -1,13 +1,7 @@
-FROM node:18
-
+FROM node:18-slim
 WORKDIR /app
-
 COPY package*.json ./
-
-RUN npm install --production
-
+RUN npm ci --omit=dev || npm install --production
 COPY . .
-
-EXPOSE 5000
-
+EXPOSE 8080
 CMD ["node", "server.js"]

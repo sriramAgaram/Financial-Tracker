@@ -31,6 +31,6 @@ app.use('/ledger', ledgerRoute);
 
 
 
-app.listen(port, () => {
-    console.log('Server is Running on Port', port);
-})
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Listening on ${port}`);
+});
