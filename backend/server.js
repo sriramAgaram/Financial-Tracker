@@ -16,7 +16,7 @@ const ledgerRoute = require('./router/ledger.route');
 
 app.use(cors());
 dotenv.config();
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 8080
 app.use(express.json());
 app.use(globalLimiter);
 
