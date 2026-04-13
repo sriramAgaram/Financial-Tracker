@@ -24,7 +24,6 @@ steps:
       - '--region=asia-south1'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--port=5000'
 
 images:
   - 'gcr.io/$PROJECT_ID/backend:$COMMIT_SHA'
