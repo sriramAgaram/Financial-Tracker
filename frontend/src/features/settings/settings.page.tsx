@@ -71,7 +71,7 @@ const SettingsPage = () => {
                 </div>
                 <div>
                   <h2 className="text-lg md:text-xl font-semibold text-white">Spending Limits</h2>
-                  <p className="text-indigo-100 text-xs md:text-sm">Control your daily & monthly budget</p>
+                  <p className="text-indigo-100 text-xs md:text-sm">Control your budget & opening balance</p>
                 </div>
               </div>
               {!isEditing && (
@@ -135,8 +135,9 @@ const SettingsPage = () => {
                     keyfilter="num"
                     readOnly={!isEditing}
                   />
-                  <label htmlFor="overall_amount" className="text-purple-700">Overall Amount (₹)</label>
+                  <label htmlFor="overall_amount" className="text-purple-700">Opening Balance (₹)</label>
                 </FloatLabel>
+                <small className="text-purple-400 block mt-1 italic">Set your starting amount here. For daily income, use Credit transactions.</small>
                 {getFormErrorMessage('overall_amount')}
               </div>
             </div>

@@ -107,7 +107,7 @@ exports.homedata = async (req, res) => {
             // Get monthly transactions for THIS ledger
             const { data: monthlyTransactions, error: monthlyError } = await supabase
                 .from('transactions')
-                .select('amount')
+                .select('amount, transaction_type')
                 .eq('user_id', userId)
                 .eq('ledger_id', ledgerId)
                 .gte('date', startMonth.toISOString())
@@ -116,7 +116,7 @@ exports.homedata = async (req, res) => {
             // Get daily transactions for THIS ledger
             const { data: dailyTransactions, error: dailyError } = await supabase
                 .from('transactions')
-                .select('amount')
+                .select('amount, transaction_type')
                 .eq('user_id', userId)
                 .eq('ledger_id', ledgerId)
                 .gte('date', startToday.toISOString())
@@ -127,7 +127,7 @@ exports.homedata = async (req, res) => {
             
             const { data: prevMonthlyTransactions, error: prevMonthlyError } = await supabase
                 .from('transactions')
-                .select('amount')
+                .select('amount, transaction_type')
                 .eq('user_id', userId)
                 .eq('ledger_id', ledgerId)
                 .gte('date', startPrevMonth.toISOString())
@@ -137,13 +137,37 @@ exports.homedata = async (req, res) => {
                 throw monthlyError || dailyError || prevMonthlyError;
             }
 
-            const monthlySum = monthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
-            const dailySum = dailyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
-            const prevMonthSum = prevMonthlyTransactions?.reduce((sum, transaction) => sum + Number.parseFloat(transaction.amount || 0), 0) || 0;
+            const monthlyIncome = monthlyTransactions?.reduce((sum, transaction) => {
+                return transaction.transaction_type === 'CREDIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+            }, 0) || 0;
 
-            let balanceMonthlyAmt = limitData.monthly_limit - monthlySum;
-            let balanceDailyAmt = limitData.daily_limit - dailySum;
-            let balanceOverallAmt = limitData.overall_amount - monthlySum;
+            const monthlyExpense = monthlyTransactions?.reduce((sum, transaction) => {
+                return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+            }, 0) || 0;
+
+            const dailyExpense = dailyTransactions?.reduce((sum, transaction) => {
+                return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+            }, 0) || 0;
+
+            const prevMonthExpense = prevMonthlyTransactions?.reduce((sum, transaction) => {
+                return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+            }, 0) || 0;
+
+            // overall balance = Opening Balance (overall_amount) + Total Credits - Total Debits
+            // Using RPC for performance to avoid fetching all transactions into Node.js memory
+            const { data: totalBalanceAdjustment, error: allTransactionsError } = await supabase
+                .rpc('get_ledger_balance', { 
+                    p_user_id: userId, 
+                    p_ledger_id: ledgerId 
+                });
+            
+            if (allTransactionsError) {
+                console.error("RPC Error (get_ledger_balance):", allTransactionsError);
+            }
+
+            let balanceMonthlyAmt = limitData.monthly_limit - monthlyExpense;
+            let balanceDailyAmt = limitData.daily_limit - dailyExpense;
+            let balanceOverallAmt = limitData.overall_amount + (Number.parseFloat(totalBalanceAdjustment) || 0);
 
 
             res.status(200).json({
@@ -155,9 +179,10 @@ exports.homedata = async (req, res) => {
                     dailyLimit: limitData.daily_limit, 
                     monthlyLimit: limitData.monthly_limit, 
                     balanceOverallAmt,
-                    currentExpense: monthlySum,
-                    currentDailyExpense: dailySum,
-                    prevMonthSum
+                    currentExpense: monthlyExpense,
+                    currentIncome: monthlyIncome,
+                    currentDailyExpense: dailyExpense,
+                    prevMonthSum: prevMonthExpense
                 }
             });
         } else {

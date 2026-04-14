@@ -16,7 +16,7 @@ const ledgerRoute = require('./router/ledger.route');
 
 app.use(cors());
 dotenv.config();
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 8080
 app.use(express.json());
 app.use(globalLimiter);
 
@@ -31,6 +31,6 @@ app.use('/ledger', ledgerRoute);
 
 
 
-app.listen(port, () => {
-    console.log('Server is Running on Port', port);
-})
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Listening on ${port}`);
+});
