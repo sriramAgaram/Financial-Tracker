@@ -14,10 +14,7 @@ const cronRoute = require('./router/cron.route');
 const userRoute = require('./router/user.route');
 const ledgerRoute = require('./router/ledger.route');
 
-app.use(cors({
-  origin: 'https://financial-tracker-frontend-9rg8.onrender.com',
-  credentials: true,
-}));
+app.use(cors());
 dotenv.config();
 const port = process.env.PORT || 8080
 app.use(express.json());
