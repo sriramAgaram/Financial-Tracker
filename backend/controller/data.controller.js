@@ -103,91 +103,94 @@ exports.homedata = async (req, res) => {
             .eq('ledger_id', ledgerId)
             .single();
 
-        if (limitData) {
-            // Get monthly transactions for THIS ledger
-            const { data: monthlyTransactions, error: monthlyError } = await supabase
-                .from('transactions')
-                .select('amount, transaction_type')
-                .eq('user_id', userId)
-                .eq('ledger_id', ledgerId)
-                .gte('date', startMonth.toISOString())
-                .lt('date', startNextMonth.toISOString());
+        // Default values if limitData is missing
+        const limits = limitData || {
+            monthly_limit: 0,
+            daily_limit: 0,
+            overall_amount: 0
+        };
 
-            // Get daily transactions for THIS ledger
-            const { data: dailyTransactions, error: dailyError } = await supabase
-                .from('transactions')
-                .select('amount, transaction_type')
-                .eq('user_id', userId)
-                .eq('ledger_id', ledgerId)
-                .gte('date', startToday.toISOString())
-                .lt('date', startTomorrow.toISOString());
+        // Get monthly transactions for THIS ledger
+        const { data: monthlyTransactions, error: monthlyError } = await supabase
+            .from('transactions')
+            .select('amount, transaction_type')
+            .eq('user_id', userId)
+            .eq('ledger_id', ledgerId)
+            .gte('date', startMonth.toISOString())
+            .lt('date', startNextMonth.toISOString());
 
-            // Get previous month transactions for THIS ledger
-            const startPrevMonth = startOfMonth(addMonths(now, -1));
-            
-            const { data: prevMonthlyTransactions, error: prevMonthlyError } = await supabase
-                .from('transactions')
-                .select('amount, transaction_type')
-                .eq('user_id', userId)
-                .eq('ledger_id', ledgerId)
-                .gte('date', startPrevMonth.toISOString())
-                .lt('date', startMonth.toISOString());
+        // Get daily transactions for THIS ledger
+        const { data: dailyTransactions, error: dailyError } = await supabase
+            .from('transactions')
+            .select('amount, transaction_type')
+            .eq('user_id', userId)
+            .eq('ledger_id', ledgerId)
+            .gte('date', startToday.toISOString())
+            .lt('date', startTomorrow.toISOString());
 
-            if (monthlyError || dailyError || prevMonthlyError) {
-                throw monthlyError || dailyError || prevMonthlyError;
-            }
+        // Get previous month transactions for THIS ledger
+        const startPrevMonth = startOfMonth(addMonths(now, -1));
+        
+        const { data: prevMonthlyTransactions, error: prevMonthlyError } = await supabase
+            .from('transactions')
+            .select('amount, transaction_type')
+            .eq('user_id', userId)
+            .eq('ledger_id', ledgerId)
+            .gte('date', startPrevMonth.toISOString())
+            .lt('date', startMonth.toISOString());
 
-            const monthlyIncome = monthlyTransactions?.reduce((sum, transaction) => {
-                return transaction.transaction_type === 'CREDIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-            }, 0) || 0;
-
-            const monthlyExpense = monthlyTransactions?.reduce((sum, transaction) => {
-                return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-            }, 0) || 0;
-
-            const dailyExpense = dailyTransactions?.reduce((sum, transaction) => {
-                return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-            }, 0) || 0;
-
-            const prevMonthExpense = prevMonthlyTransactions?.reduce((sum, transaction) => {
-                return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-            }, 0) || 0;
-
-            // overall balance = Opening Balance (overall_amount) + Total Credits - Total Debits
-            // Using RPC for performance to avoid fetching all transactions into Node.js memory
-            const { data: totalBalanceAdjustment, error: allTransactionsError } = await supabase
-                .rpc('get_ledger_balance', { 
-                    p_user_id: userId, 
-                    p_ledger_id: ledgerId 
-                });
-            
-            if (allTransactionsError) {
-                console.error("RPC Error (get_ledger_balance):", allTransactionsError);
-            }
-
-            let balanceMonthlyAmt = limitData.monthly_limit - monthlyExpense;
-            let balanceDailyAmt = limitData.daily_limit - dailyExpense;
-            let balanceOverallAmt = limitData.overall_amount + (Number.parseFloat(totalBalanceAdjustment) || 0);
-
-
-            res.status(200).json({
-                status: true,
-                msg: 'Data Fetched Successfully',
-                data: { 
-                    balanceDailyAmt, 
-                    balanceMonthlyAmt, 
-                    dailyLimit: limitData.daily_limit, 
-                    monthlyLimit: limitData.monthly_limit, 
-                    balanceOverallAmt,
-                    currentExpense: monthlyExpense,
-                    currentIncome: monthlyIncome,
-                    currentDailyExpense: dailyExpense,
-                    prevMonthSum: prevMonthExpense
-                }
-            });
-        } else {
-            res.status(404).json({ status: false, msg: 'Limit data not found for this ledger', limitError });
+        if (monthlyError || dailyError || prevMonthlyError) {
+            throw monthlyError || dailyError || prevMonthlyError;
         }
+
+        const monthlyIncome = monthlyTransactions?.reduce((sum, transaction) => {
+            return transaction.transaction_type === 'CREDIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+        }, 0) || 0;
+
+        const monthlyExpense = monthlyTransactions?.reduce((sum, transaction) => {
+            return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+        }, 0) || 0;
+
+        const dailyExpense = dailyTransactions?.reduce((sum, transaction) => {
+            return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+        }, 0) || 0;
+
+        const prevMonthExpense = prevMonthlyTransactions?.reduce((sum, transaction) => {
+            return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
+        }, 0) || 0;
+
+        // overall balance = Opening Balance (overall_amount) + Total Credits - Total Debits
+        // Using RPC for performance to avoid fetching all transactions into Node.js memory
+        const { data: totalBalanceAdjustment, error: allTransactionsError } = await supabase
+            .rpc('get_ledger_balance', { 
+                p_user_id: userId, 
+                p_ledger_id: ledgerId 
+            });
+        
+        if (allTransactionsError) {
+            console.error("RPC Error (get_ledger_balance):", allTransactionsError);
+        }
+
+        let balanceMonthlyAmt = (limits.monthly_limit || 0) - monthlyExpense;
+        let balanceDailyAmt = (limits.daily_limit || 0) - dailyExpense;
+        let balanceOverallAmt = (limits.overall_amount || 0) + (Number.parseFloat(totalBalanceAdjustment) || 0);
+
+
+        res.status(200).json({
+            status: true,
+            msg: 'Data Fetched Successfully',
+            data: { 
+                balanceDailyAmt, 
+                balanceMonthlyAmt, 
+                dailyLimit: limits.daily_limit, 
+                monthlyLimit: limits.monthly_limit, 
+                balanceOverallAmt,
+                currentExpense: monthlyExpense,
+                currentIncome: monthlyIncome,
+                currentDailyExpense: dailyExpense,
+                prevMonthSum: prevMonthExpense
+            }
+        });
 
     } catch (error) {
         console.error("Server error:", error);

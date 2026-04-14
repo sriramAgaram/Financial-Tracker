@@ -18,7 +18,6 @@ import {
   ChevronDown,
   LayoutGrid
 } from 'lucide-react';
-import { listLedgerActions } from '../ledger/redux/ledgerSagas';
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch();
@@ -33,7 +32,6 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     dispatch(homeDataActions.request());
-    dispatch(listLedgerActions.request());
   }, [])
 
   const handleChange = (e: any) => {

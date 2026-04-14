@@ -135,12 +135,12 @@ exports.completeSignup = async (req, res, next) => {
 
         if (ledgerError) {
             console.error('Ledger Creation Error:', ledgerError);
-            // Non-critical error, but should log
+            return res.status(500).json({ status: false, msg: 'Ledger creation failed', error: ledgerError });
         }
 
         const ledgerId = ledgerData?.ledger_id;
 
-        await supabase.from('amount_limit').insert([{
+        const { error: limitError } = await supabase.from('amount_limit').insert([{
             user_id: userData.user_id,
             ledger_id: ledgerId,
             monthly_limit: 1000,
@@ -148,11 +148,22 @@ exports.completeSignup = async (req, res, next) => {
             overall_amount: 1000
         }]);
 
-        await supabase.from('expense_type').insert([{
+        if (limitError) {
+            console.error('Limit Creation Error:', limitError);
+            return res.status(500).json({ status: false, msg: 'Limit initialization failed', error: limitError });
+        }
+
+        const { error: expenseError } = await supabase.from('expense_type').insert([{
             user_id: userData.user_id,
             ledger_id: ledgerId,
-            expense_name: 'Travel Expenses'
+            expense_name: 'Travel Expenses',
+            type: 'DEBIT'
         }]);
+
+        if (expenseError) {
+            console.error('Expense Type Creation Error:', expenseError);
+            return res.status(500).json({ status: false, msg: 'Expense type initialization failed', error: expenseError });
+        }
 
         // 6. Cleanup Temp Table
         await supabase.from('temp_registrations').delete().eq('email', email);

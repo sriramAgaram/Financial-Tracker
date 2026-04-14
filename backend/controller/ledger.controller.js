@@ -26,7 +26,7 @@ exports.add = async (req, res) => {
         const userId = req.user.userId;
 
         // Auto-initialize Limits for the new ledger
-        await supabase.from('amount_limit').insert([{
+        const { error: limitError } = await supabase.from('amount_limit').insert([{
             user_id: userId,
             ledger_id: ledgerId,
             monthly_limit: 1000,
@@ -34,12 +34,31 @@ exports.add = async (req, res) => {
             overall_amount: 1000
         }]);
 
+        if (limitError) {
+            console.error('Limit Initialization Error:', limitError);
+            return res.status(500).json({
+                status: false,
+                msg: 'Failed to initialize limits for the ledger',
+                error: limitError.message
+            });
+        }
+
         // Auto-initialize default Expense Type for the new ledger
-        await supabase.from('expense_type').insert([{
+        const { error: expenseError } = await supabase.from('expense_type').insert([{
             user_id: userId,
             ledger_id: ledgerId,
-            expense_name: 'Travel Expenses'
+            expense_name: 'Travel Expenses',
+            type: 'DEBIT'
         }]);
+
+        if (expenseError) {
+            console.error('Expense Type Initialization Error:', expenseError);
+            return res.status(500).json({
+                status: false,
+                msg: 'Failed to initialize expense type for the ledger',
+                error: expenseError.message
+            });
+        }
 
         res.status(201).json({
             status: true,
