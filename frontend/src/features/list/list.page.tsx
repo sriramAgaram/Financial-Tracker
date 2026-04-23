@@ -164,8 +164,7 @@ const ListPage = () => {
 
           <div className="space-y-4">
             {transactions?.map((item: any) => {
-              const expenseType = expenseTypes.find((type: any) => type.expense_type_id === item.expense_type_id);
-              const expenseName = expenseType ? expenseType.expense_name : 'Unknown';
+              const expenseName = item.expense_name;
               const date = item.date ? format(new Date(item.date), 'dd MMM, hh:mm a') : '';
               const initial = expenseName.charAt(0).toUpperCase();
 

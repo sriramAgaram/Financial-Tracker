@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase.js");
+const { pool } = require("../config/supabase.js");
 const { getTransactionFields } = require("../models/transaction.model.js");
 
 exports.add = async (req, res) => {
@@ -6,23 +6,20 @@ exports.add = async (req, res) => {
         let userInput = req.body;
         userInput['user_id'] =  req.user.userId;
         let transactionInsertData = getTransactionFields(userInput);
-        const { data, error } = await supabase
-            .from('transactions')
-            .insert([transactionInsertData])
-            .select();
-
-        if (error) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to create transaction',
-                error: error.message
-            });
-        }
+        
+        const keys = Object.keys(transactionInsertData);
+        const values = Object.values(transactionInsertData);
+        const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+        
+        const { rows } = await pool.query(
+            `INSERT INTO transactions (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`,
+            values
+        );
 
         res.status(201).json({
             status: true,
             msg: 'Transaction created successfully',
-            data
+            data: rows
         });
     } catch (error) {
         res.status(500).json({
@@ -38,40 +35,26 @@ exports.update = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
-        updateData['user_id'] =  req.user.userId
-        let transactionUpdateData = getTransactionFields(updateData)
-        const { data: existingTransaction, error: findError } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('transaction_id', id)
-            .eq('user_id' , req.user.userId)
-            .single();
+        updateData['user_id'] =  req.user.userId;
+        let transactionUpdateData = getTransactionFields(updateData);
+        
+        const keys = Object.keys(transactionUpdateData);
+        const values = Object.values(transactionUpdateData);
+        const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+        
+        const { rows } = await pool.query(
+            `UPDATE transactions SET ${setClause} WHERE transaction_id = $${keys.length + 1} AND user_id = $${keys.length + 2} RETURNING *`,
+            [...values, id, req.user.userId]
+        );
 
-        if (!existingTransaction) {
-            return res.status(404).json({
-                status: false,
-                msg: 'Transaction not found'
-            });
-        }
-        const { data, error: updateError } = await supabase
-            .from('transactions')
-            .update([transactionUpdateData])
-            .eq('transaction_id', id)
-            .eq('user_id' , req.user.userId)
-            .select();
-
-        if (updateError) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to update transaction',
-                error: updateError.message
-            });
+        if (rows.length === 0) {
+            return res.status(404).json({ status: false, msg: 'Transaction not found' });
         }
 
         res.status(200).json({
             status: true,
             msg: "Transaction updated successfully",
-            data
+            data: rows
         });
     } catch (error) {
         res.status(500).json({
@@ -84,70 +67,57 @@ exports.update = async (req, res) => {
 
 exports.lists = async (req, res) => {
     try {
-        const { pageNumber, rows, category, fromDate, toDate } = req.body;
-        const from = (pageNumber - 1) * rows;
-        const to = from + rows - 1;
+        const { pageNumber, rows: limitRowsCount, category, fromDate, toDate } = req.body;
+        const offset = (pageNumber - 1) * limitRowsCount;
         const user_id = req.user.userId;
         const ledger_id = req.body?.ledger_id || req.query?.ledger_id || null;
 
-        let query = supabase
-            .from('transactions')
-            .select(`
-                transaction_id,
-                amount,
-                date,
-                expense_type_id,
-                user_id,
-                ledger_id,
-                transaction_type
-            `, { count: 'exact' })
-            .eq('user_id', user_id)
-            .eq('ledger_id', ledger_id);
+        let whereClauses = ['transactions.user_id = $1', 'transactions.ledger_id = $2'];
+        let params = [user_id, ledger_id];
+        let paramIndex = 3;
 
         if (category && category.length > 0) {
-            query = query.in('expense_type_id', category);
+            whereClauses.push(`transactions.expense_type_id = ANY($${paramIndex})`);
+            params.push(category);
+            paramIndex++;
         }
 
         if (fromDate) {
-            query = query.gte('date', fromDate);
+            whereClauses.push(`transactions.date >= $${paramIndex}`);
+            params.push(fromDate);
+            paramIndex++;
         }
         if (toDate) {
-            query = query.lte('date', toDate);
+            whereClauses.push(`transactions.date <= $${paramIndex}`);
+            params.push(toDate);
+            paramIndex++;
         }
 
-        const { data, error, count } = await query
-            .order('date', { ascending: false })
-            .range(from, to);
+        const whereString = whereClauses.join(' AND ');
 
-        if (error) {
-            console.error('Fetch Transactions Error:', error);
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to fetch transactions',
-                error: error
-            });
-        }
-
-        // Calculate Filtered Total using RPC for better performance
-        const { data: filtered_total, error: totalError } = await supabase
-            .rpc('get_filtered_total', {
-                p_user_id: user_id,
-                p_ledger_id: ledger_id,
-                p_categories: category && category.length > 0 ? category : null,
-                p_from_date: fromDate || null,
-                p_to_date: toDate || null
-            });
-
-        if (totalError) {
-            console.error('Fetch Filtered Total Error:', totalError);
-        }
+        // Get Transactions and Total Count in parallel
+        const [transactionsRes, countRes, filteredTotalRes] = await Promise.all([
+            pool.query(
+                `SELECT transactions.transaction_id, transactions.amount, transactions.date, transactions.expense_type_id, transactions.user_id, transactions.ledger_id, transactions.transaction_type, ex.expense_name 
+                 FROM transactions LEFT JOIN expense_type ex ON transactions.expense_type_id = ex.expense_type_id 
+                WHERE ${whereString} 
+                 ORDER BY transactions.date DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+                [...params, limitRowsCount, offset]
+            ),
+            pool.query(`SELECT COUNT(*) FROM transactions WHERE ${whereString}`, params),
+            pool.query(
+                `SELECT SUM(CASE WHEN transaction_type = 'CREDIT' THEN amount ELSE -amount END) as filtered_total 
+                 FROM transactions WHERE ${whereString}`,
+                params
+            )
+        ]);
 
         res.status(200).json({
             status: true,
             msg: "Transactions fetched successfully",
-            data,
-            total_count: count,
-            filtered_total
+            data: transactionsRes.rows,
+            total_count: parseInt(countRes.rows[0].count),
+            filtered_total: parseFloat(filteredTotalRes.rows[0].filtered_total || 0)
         });
     } catch (error) {
         res.status(500).json({
@@ -193,31 +163,15 @@ exports.lists = async (req, res) => {
 exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
-        const { data: existingTransaction, error: findError } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('transaction_id', id)
-            .eq('user_id' , req.user.userId)
-            .single();
+        const { rowCount } = await pool.query(
+            'DELETE FROM transactions WHERE transaction_id = $1 AND user_id = $2',
+            [id, req.user.userId]
+        );
 
-        if (!existingTransaction) {
-            return res.status(404).json({
-                status: false,
-                msg: 'Transaction not found'
-            });
+        if (rowCount === 0) {
+            return res.status(404).json({ status: false, msg: 'Transaction not found' });
         }
-        const { error: deleteError } = await supabase
-            .from('transactions')
-            .delete()
-            .eq('transaction_id', id);
 
-        if (deleteError) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to delete transaction',
-                error: deleteError.message
-            });
-        }
         res.status(200).json({
             status: true,
             msg: "Transaction deleted successfully"
@@ -234,38 +188,36 @@ exports.delete = async (req, res) => {
 exports.weeklyData = async (req, res) => {
     try {
         const { fromDate, toDate } = req.body;
-        
         const ledger_id = req.body.ledger_id || req.query.ledger_id || null;
 
-        const { data, error } = await supabase.rpc('get_daily_totals', {
-            p_user_id: req.user.userId,
-            p_ledger_id: ledger_id,
-            p_from_date: fromDate,
-            p_to_date: toDate
-        });
+        // Perform both queries in parallel: Aggregated daily totals and the Daily Limit
+        const [dailyTotalsRes, limitRes] = await Promise.all([
+            pool.query(
+                `SELECT 
+                    TO_CHAR(date, 'YYYY-MM-DD') as transaction_date, 
+                    COALESCE(SUM(amount), 0) as total_amount 
+                 FROM transactions 
+                 WHERE user_id = $1 AND ledger_id = $2 AND transaction_type = 'DEBIT' 
+                   AND date >= $3 AND date <= $4 
+                 GROUP BY TO_CHAR(date, 'YYYY-MM-DD') 
+                 ORDER BY transaction_date`,
+                [req.user.userId, ledger_id, fromDate, toDate]
+            ),
+            pool.query(
+                'SELECT daily_limit FROM amount_limit WHERE user_id = $1 AND ledger_id = $2 LIMIT 1',
+                [req.user.userId, ledger_id]
+            )
+        ]);
 
-        const { data: limitData, error: limitError } = await supabase.from('amount_limit')
-            .select('daily_limit')
-            .eq('user_id', req.user.userId)
-            .eq('ledger_id', ledger_id)
-            .single();
-
-
-        if(limitError){
-            return res.status(400).json({limitError: limitError.message})
-        }
-
-        if (error) {
-            console.error('Weekly Data RPC Error:', error);
-            return res.status(400).json({ error: error });
-        }
+        const data = dailyTotalsRes.rows;
+        const dailyLimit = limitRes.rows[0]?.daily_limit || 0;
 
         // Extract arrays for chart
-        const chartData = data.map(day => day.total_amount);
+        const chartData = data.map(day => parseFloat(day.total_amount));
         const labels = data.map(day => day.transaction_date);
 
         const overExpenseChartData = data.map(day => 
-            (limitData && day.total_amount > limitData.daily_limit) ? day.total_amount : null
+            (parseFloat(day.total_amount) > dailyLimit) ? parseFloat(day.total_amount) : null
         );
         const overExpenseLabels = data.map(day => day.transaction_date);
 

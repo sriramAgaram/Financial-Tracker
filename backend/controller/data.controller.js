@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase.js");
+const {  pool } = require("../config/supabase.js");
 const { startOfMonth, startOfDay, addMonths, addDays } = require('date-fns')
 
 exports.getSettingsData = async (req, res) => {
@@ -14,33 +14,17 @@ exports.getSettingsData = async (req, res) => {
             });
         }
 
-        // Get limits data for the user
-        const { data: limitsData, error: limitsError } = await supabase
-            .from('amount_limit')
-            .select('limit_id, user_id, monthly_limit, daily_limit, overall_amount, created_at, updated_at')
-            .eq('user_id', userId);
+        // Get limits data for the user using raw SQL
+        const { rows: limitsData } = await pool.query(
+            'SELECT limit_id, user_id, monthly_limit, daily_limit, overall_amount, created_at, updated_at FROM amount_limit WHERE user_id = $1',
+            [userId]
+        );
 
-        if (limitsError) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to fetch limits data',
-                error: limitsError.message
-            });
-        }
-
-        // Get expense types data for the user
-        const { data: expenseTypesData, error: expenseTypesError } = await supabase
-            .from('expense_type')
-            .select('expense_type_id, expense_name, user_id, created_at, updated_at')
-            .eq('user_id', userId);
-
-        if (expenseTypesError) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to fetch expense types data',
-                error: expenseTypesError.message
-            });
-        }
+        // Get expense types data for the user using raw SQL
+        const { rows: expenseTypesData } = await pool.query(
+            'SELECT expense_type_id, expense_name, user_id, created_at, updated_at FROM expense_type WHERE user_id = $1',
+            [userId]
+        );
 
         // Combine the data
         const settingsData = {
@@ -96,84 +80,57 @@ exports.homedata = async (req, res) => {
         const startNextMonth = startOfMonth(addMonths(now, 1))
         const startTomorrow = startOfDay(addDays(now, 1));
 
-        const { data: limitData, error: limitError } = await supabase
-            .from('amount_limit')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('ledger_id', ledgerId)
-            .single();
+        // Get individual limits for THIS ledger
+        const { rows: limitRows } = await pool.query(
+            'SELECT * FROM amount_limit WHERE user_id = $1 AND ledger_id = $2 LIMIT 1',
+            [userId, ledgerId]
+        );
+        const limits = limitRows[0] || { monthly_limit: 0, daily_limit: 0, overall_amount: 0 };
 
-        // Default values if limitData is missing
-        const limits = limitData || {
-            monthly_limit: 0,
-            daily_limit: 0,
-            overall_amount: 0
-        };
+        // Optimization: Run all aggregations in SQL instead of fetching records and using .reduce in JS
+        // Sum Monthly Income/Expense
+        const { rows: monthlyAgg } = await pool.query(
+            `SELECT 
+                COALESCE(SUM(CASE WHEN transaction_type = 'CREDIT' THEN amount ELSE 0 END), 0) as income,
+                COALESCE(SUM(CASE WHEN transaction_type = 'DEBIT' THEN amount ELSE 0 END), 0) as expense
+             FROM transactions 
+             WHERE user_id = $1 AND ledger_id = $2 AND date >= $3 AND date < $4`,
+            [userId, ledgerId, startMonth.toISOString(), startNextMonth.toISOString()]
+        );
 
-        // Get monthly transactions for THIS ledger
-        const { data: monthlyTransactions, error: monthlyError } = await supabase
-            .from('transactions')
-            .select('amount, transaction_type')
-            .eq('user_id', userId)
-            .eq('ledger_id', ledgerId)
-            .gte('date', startMonth.toISOString())
-            .lt('date', startNextMonth.toISOString());
+        // Sum Daily Expense
+        const { rows: dailyAgg } = await pool.query(
+            `SELECT COALESCE(SUM(amount), 0) as expense FROM transactions 
+             WHERE user_id = $1 AND ledger_id = $2 AND transaction_type = 'DEBIT' AND date >= $3 AND date < $4`,
+            [userId, ledgerId, startToday.toISOString(), startTomorrow.toISOString()]
+        );
 
-        // Get daily transactions for THIS ledger
-        const { data: dailyTransactions, error: dailyError } = await supabase
-            .from('transactions')
-            .select('amount, transaction_type')
-            .eq('user_id', userId)
-            .eq('ledger_id', ledgerId)
-            .gte('date', startToday.toISOString())
-            .lt('date', startTomorrow.toISOString());
-
-        // Get previous month transactions for THIS ledger
+        // Sum Previous Month Expense
         const startPrevMonth = startOfMonth(addMonths(now, -1));
-        
-        const { data: prevMonthlyTransactions, error: prevMonthlyError } = await supabase
-            .from('transactions')
-            .select('amount, transaction_type')
-            .eq('user_id', userId)
-            .eq('ledger_id', ledgerId)
-            .gte('date', startPrevMonth.toISOString())
-            .lt('date', startMonth.toISOString());
+        const { rows: prevMonthlyAgg } = await pool.query(
+            `SELECT COALESCE(SUM(amount), 0) as expense FROM transactions 
+             WHERE user_id = $1 AND ledger_id = $2 AND transaction_type = 'DEBIT' AND date >= $3 AND date < $4`,
+            [userId, ledgerId, startPrevMonth.toISOString(), startMonth.toISOString()]
+        );
 
-        if (monthlyError || dailyError || prevMonthlyError) {
-            throw monthlyError || dailyError || prevMonthlyError;
-        }
-
-        const monthlyIncome = monthlyTransactions?.reduce((sum, transaction) => {
-            return transaction.transaction_type === 'CREDIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-        }, 0) || 0;
-
-        const monthlyExpense = monthlyTransactions?.reduce((sum, transaction) => {
-            return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-        }, 0) || 0;
-
-        const dailyExpense = dailyTransactions?.reduce((sum, transaction) => {
-            return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-        }, 0) || 0;
-
-        const prevMonthExpense = prevMonthlyTransactions?.reduce((sum, transaction) => {
-            return transaction.transaction_type === 'DEBIT' ? sum + Number.parseFloat(transaction.amount || 0) : sum;
-        }, 0) || 0;
-
+        // Replace RPC (get_ledger_balance) with raw native SQL for balance calculation
         // overall balance = Opening Balance (overall_amount) + Total Credits - Total Debits
-        // Using RPC for performance to avoid fetching all transactions into Node.js memory
-        const { data: totalBalanceAdjustment, error: allTransactionsError } = await supabase
-            .rpc('get_ledger_balance', { 
-                p_user_id: userId, 
-                p_ledger_id: ledgerId 
-            });
-        
-        if (allTransactionsError) {
-            console.error("RPC Error (get_ledger_balance):", allTransactionsError);
-        }
+        const { rows: balanceAgg } = await pool.query(
+            `SELECT COALESCE(SUM(CASE WHEN transaction_type = 'CREDIT' THEN amount ELSE -amount END), 0) as total_adjustment 
+             FROM transactions 
+             WHERE user_id = $1 AND ledger_id = $2`,
+            [userId, ledgerId]
+        );
+
+        const monthlyIncome = Number(monthlyAgg[0]?.income || 0);
+        const monthlyExpense = Number(monthlyAgg[0]?.expense || 0);
+        const dailyExpense = Number(dailyAgg[0]?.expense || 0);
+        const prevMonthExpense = Number(prevMonthlyAgg[0]?.expense || 0);
+        const totalBalanceAdjustment = Number(balanceAgg[0]?.total_adjustment || 0);
 
         let balanceMonthlyAmt = (limits.monthly_limit || 0) - monthlyExpense;
         let balanceDailyAmt = (limits.daily_limit || 0) - dailyExpense;
-        let balanceOverallAmt = (limits.overall_amount || 0) + (Number.parseFloat(totalBalanceAdjustment) || 0);
+        let balanceOverallAmt = (limits.overall_amount || 0) + totalBalanceAdjustment;
 
 
         res.status(200).json({

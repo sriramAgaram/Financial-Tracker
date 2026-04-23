@@ -28,10 +28,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isOpen, onClose }) =>
   const [newLedgerName, setNewLedgerName] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      dispatch(listLedgerActions.request());
-    }
-  }, [isOpen, dispatch]);
+    dispatch(listLedgerActions.request());
+  }, [dispatch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

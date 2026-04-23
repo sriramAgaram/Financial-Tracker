@@ -34,7 +34,8 @@ const ledgerSlice = createSlice({
     builder.addCase(listLedgerActions.types.SUCCESS, (state, action: PayloadAction<Ledger[]>) => {
       state.loading = false;
       state.ledgers = action.payload;
-      if (!state.activeLedgerId && action.payload.length > 0) {
+      const activeExists = action.payload.some(l => l.ledger_id === state.activeLedgerId);
+      if ((!state.activeLedgerId || !activeExists) && action.payload.length > 0) {
         const defaultLedger = action.payload.find(l => l.is_default) || action.payload[0];
         state.activeLedgerId = defaultLedger.ledger_id;
         localStorage.setItem('activeLedgerId', defaultLedger.ledger_id.toString());

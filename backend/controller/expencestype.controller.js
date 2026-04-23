@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase.js")
+const { pool } = require("../config/supabase.js")
 const expenseModel = require("../models/expense.model.js")
 
 exports.add = async (req, res) => {
@@ -8,28 +8,26 @@ exports.add = async (req, res) => {
 
         const createData = expenseModel.getExpenseTypeForCreate(userInput);
 
-        const { data: existingType, error: checkError } = await supabase
-            .from('expense_type')
-            .select('*')
-            .eq("expense_name", createData.expense_name)
-            .eq("user_id", createData.user_id)
-            .eq("ledger_id", createData?.ledger_id)
-            .single();
+        // Check if exists using raw SQL
+        const { rows: existingRows } = await pool.query(
+            'SELECT * FROM expense_type WHERE expense_name = $1 AND user_id = $2 AND ledger_id = $3',
+            [createData.expense_name, createData.user_id, createData.ledger_id]
+        );
 
-        if (existingType) {
+        if (existingRows.length > 0) {
             return res.status(400).json({ status: false, msg: 'The Expense Type already exists' });
         }
 
-        const { data, error: insertError } = await supabase
-            .from('expense_type')
-            .insert([createData])
-            .select();
+        const keys = Object.keys(createData);
+        const values = Object.values(createData);
+        const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
 
-        if (insertError) {
-            return res.status(500).json({ status: false, msg: 'Failed to create expense type', error: insertError });
-        }
+        const { rows } = await pool.query(
+            `INSERT INTO expense_type (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`,
+            values
+        );
 
-        res.status(201).json({ status: true, msg: "Expense Type created successfully", data });
+        res.status(201).json({ status: true, msg: "Expense Type created successfully", data: rows });
     } catch (error) {
         res.status(500).json({ status: false, msg: 'Internal Server Error', error });
     }
@@ -39,46 +37,42 @@ exports.update = async (req, res) => {
     try {
         const { id } = req.params;
         let updateData = req.body;
-        updateData['user_id'] = req.user.userId
+        const userId = req.user.userId;
+        updateData['user_id'] = userId;
 
-        // Pick only allowed fields for update
         const updateFields = expenseModel.getExpenseTypeForUpdate(updateData);
 
-        const { data: existingType, error: findError } = await supabase
-            .from('expense_type')
-            .select('*')
-            .eq('expense_type_id', id)
-            .eq('user_id' , updateData.user_id)
-            .single();
+        // Check if exists
+        const { rows: existingRows } = await pool.query(
+            'SELECT * FROM expense_type WHERE expense_type_id = $1 AND user_id = $2',
+            [id, userId]
+        );
 
-        if (!existingType) {
+        if (existingRows.length === 0) {
             return res.status(404).json({ status: false, msg: 'Expense Type not found' });
         }
-        if (updateFields.expense_name) {
-            const { data: conflictingType, error: conflictError } = await supabase
-                .from('expense_type')
-                .select('*')
-                .eq('expense_name', updateFields.expense_name)
-                .eq('user_id', req.user.userId)
-                .eq('ledger_id', updateFields?.ledger_id)
-                .neq('expense_type_id', id)
-                .single();
 
-            if (conflictingType) {
+        if (updateFields.expense_name) {
+            const { rows: conflictingRows } = await pool.query(
+                'SELECT * FROM expense_type WHERE expense_name = $1 AND user_id = $2 AND ledger_id = $3 AND expense_type_id != $4',
+                [updateFields.expense_name, userId, updateFields.ledger_id, id]
+            );
+
+            if (conflictingRows.length > 0) {
                 return res.status(400).json({ status: false, msg: 'Another Expense Type with this name already exists' });
             }
         }
-        const { data, error: updateError } = await supabase
-            .from('expense_type')
-            .update(updateFields)
-            .eq('expense_type_id', id)
-            .select();
 
-        if (updateError) {
-            return res.status(500).json({ status: false, msg: 'Failed to update expense type', error: updateError });
-        }
+        const keys = Object.keys(updateFields);
+        const values = Object.values(updateFields);
+        const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
 
-        res.status(200).json({ status: true, msg: "Expense Type updated successfully", data });
+        const { rows } = await pool.query(
+            `UPDATE expense_type SET ${setClause} WHERE expense_type_id = $${keys.length + 1} AND user_id = $${keys.length + 2} RETURNING *`,
+            [...values, id, userId]
+        );
+
+        res.status(200).json({ status: true, msg: "Expense Type updated successfully", data: rows });
     } catch (error) {
         console.error('Internal server Error', error)
         res.status(500).json({ status: false, msg: 'Internal Server Error', error });
@@ -89,19 +83,12 @@ exports.lists = async (req, res) => {
     try {
         const ledger_id = req.query.ledger_id || req.body.ledger_id || null;
 
-        const { data, error } = await supabase
-            .from('expense_type')
-            .select('*')
-            .eq('user_id', req.user.userId)
-            .eq('ledger_id', ledger_id)
-            .order('created_at', { ascending: false });
+        const { rows } = await pool.query(
+            'SELECT * FROM expense_type WHERE user_id = $1 AND ledger_id = $2 ORDER BY created_at DESC',
+            [req.user.userId, ledger_id]
+        );
 
-        if (error) {
-            console.error('Fetch Expense Types Error:', error);
-            return res.status(500).json({ status: false, msg: 'Failed to fetch expense types', error });
-        }
-
-        res.status(200).json({ status: true, msg: "Expense Types fetched successfully", data });
+        res.status(200).json({ status: true, msg: "Expense Types fetched successfully", data: rows });
     } catch (error) {
         res.status(500).json({ status: false, msg: 'Internal Server Error', error });
     }
@@ -130,22 +117,15 @@ exports.lists = async (req, res) => {
 exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
-        const { data: existingType, error: findError } = await supabase
-            .from('expense_type')
-            .select('*')
-            .eq('expense_type_id', id)
-            .single();
+        const { rowCount } = await pool.query(
+            'DELETE FROM expense_type WHERE expense_type_id = $1 AND user_id = $2',
+            [id, req.user.userId]
+        );
 
-        if (!existingType) {
+        if (rowCount === 0) {
             return res.status(404).json({ status: false, msg: 'Expense Type not found' });
         }
-        const { error: deleteError } = await supabase
-            .from('expense_type')
-            .delete()
-            .eq('expense_type_id', id);
-        if (deleteError) {
-            return res.status(500).json({ status: false, msg: 'Failed to delete expense type', error: deleteError });
-        }
+
         res.status(200).json({ status: true, msg: "Expense Type deleted successfully" });
     } catch (error) {
         res.status(500).json({ status: false, msg: 'Internal Server Error', error });

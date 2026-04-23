@@ -1,46 +1,32 @@
-const supabase = require("../config/supabase.js");
+const { pool } = require("../config/supabase.js");
 const limitModel = require("../models/limit.model.js");
 
 exports.add = async (req, res) => {
     try {
         const userInput = req.body;
         userInput['user_id'] = req.user.userId
-
-        // Pick only required fields for creation
         const createData = limitModel.getLimitForCreate(userInput);
 
         if (!createData.daily_limit || !createData.user_id) {
-            return res.status(400).json({
-                status: false,
-                msg: 'Missing required fields: daily_limit, user_id'
-            });
+            return res.status(400).json({ status: false, msg: 'Missing required fields: daily_limit, user_id' });
         }
 
-        const { data, error } = await supabase
-            .from('amount_limit')
-            .insert([createData])
-            .select();
+        const keys = Object.keys(createData);
+        const values = Object.values(createData);
+        const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
 
-        if (error) {
-            // Handle unique constraint violation
+        try {
+            const { rows } = await pool.query(
+                `INSERT INTO amount_limit (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`,
+                values
+            );
+            res.status(201).json({ status: true, msg: 'Limit created successfully', data: rows });
+        } catch (error) {
             if (error.code === '23505') {
-                return res.status(400).json({
-                    status: false,
-                    msg: 'This Ledger already has a limit set. Use update instead.'
-                });
+                return res.status(400).json({ status: false, msg: 'This Ledger already has a limit set. Use update instead.' });
             }
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to create limit',
-                error: error.message
-            });
+            throw error;
         }
-
-        res.status(201).json({
-            status: true,
-            msg: 'Limit created successfully',
-            data
-        });
     } catch (error) {
         res.status(500).json({
             status: false,
@@ -54,50 +40,24 @@ exports.update = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
-        updateData['user_id'] = req.user.userId
+        const userId = req.user.userId;
+        updateData['user_id'] = userId;
 
-        console.log(updateData);
-
-        // Pick only allowed fields for update
         const updateFields = limitModel.getLimitForUpdate(updateData);
+        const keys = Object.keys(updateFields);
+        const values = Object.values(updateFields);
+        const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
 
-        // Check if limit exists
-        const { data: existingLimit, error: findError } = await supabase
-            .from('amount_limit')
-            .select('*')
-            .eq('limit_id', id)
-            .eq('ledger_id', updateData.ledger_id)
-            .eq('user_id', req.user.userId)
-            .single();
+        const { rows } = await pool.query(
+            `UPDATE amount_limit SET ${setClause} WHERE limit_id = $${keys.length + 1} AND ledger_id = $${keys.length + 2} AND user_id = $${keys.length + 3} RETURNING *`,
+            [...values, id, updateData.ledger_id, userId]
+        );
 
-        if (!existingLimit) {
-            return res.status(404).json({
-                status: false,
-                msg: 'Limit not found'
-            });
+        if (rows.length === 0) {
+            return res.status(404).json({ status: false, msg: 'Limit not found' });
         }
 
-        // Update the limit
-        const { data, error: updateError } = await supabase
-            .from('amount_limit')
-            .update(updateFields)
-            .eq('limit_id', id)
-            .eq('ledger_id', updateData.ledger_id)
-            .select();
-
-        if (updateError) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to update limit',
-                error: updateError.message
-            });
-        }
-
-        res.status(200).json({
-            status: true,
-            msg: "Limit updated successfully",
-            data
-        });
+        res.status(200).json({ status: true, msg: "Limit updated successfully", data: rows });
     } catch (error) {
         res.status(500).json({
             status: false,
@@ -111,26 +71,12 @@ exports.getAll = async (req, res) => {
     try {
         const ledger_id = req.query.ledger_id || req.body.ledger_id || null;
 
-        const { data, error } = await supabase
-            .from('amount_limit')
-            .select('*')
-            .eq('user_id', req.user.userId)
-            .eq('ledger_id', ledger_id)
-            .order('created_at', { ascending: false });
+        const { rows } = await pool.query(
+            'SELECT * FROM amount_limit WHERE user_id = $1 AND ledger_id = $2 ORDER BY created_at DESC',
+            [req.user.userId, ledger_id]
+        );
 
-        if (error) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to fetch limits',
-                error: error.message
-            });
-        }
-
-        res.status(200).json({
-            status: true,
-            msg: "Limits fetched successfully",
-            data
-        });
+        res.status(200).json({ status: true, msg: "Limits fetched successfully", data: rows });
     } catch (error) {
         res.status(500).json({
             status: false,
@@ -144,25 +90,16 @@ exports.getById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { data, error } = await supabase
-            .from('amount_limit')
-            .select('*')
-            .eq('limit_id', id)
-            .eq('user_id', req.user.userId)
-            .single();
+        const { rows } = await pool.query(
+            'SELECT * FROM amount_limit WHERE limit_id = $1 AND user_id = $2 LIMIT 1',
+            [id, req.user.userId]
+        );
 
-        if (error || !data) {
-            return res.status(404).json({
-                status: false,
-                msg: 'Limit not found'
-            });
+        if (rows.length === 0) {
+            return res.status(404).json({ status: false, msg: 'Limit not found' });
         }
 
-        res.status(200).json({
-            status: true,
-            msg: "Limit fetched successfully",
-            data
-        });
+        res.status(200).json({ status: true, msg: "Limit fetched successfully", data: rows[0] });
     } catch (error) {
         res.status(500).json({
             status: false,
@@ -176,25 +113,12 @@ exports.getByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
 
-        const { data, error } = await supabase
-            .from('amount_limit')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
+        const { rows } = await pool.query(
+            'SELECT * FROM amount_limit WHERE user_id = $1 ORDER BY created_at DESC',
+            [userId]
+        );
 
-        if (error) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to fetch user limits',
-                error: error.message
-            });
-        }
-
-        res.status(200).json({
-            status: true,
-            msg: "User limits fetched successfully",
-            data
-        });
+        res.status(200).json({ status: true, msg: "User limits fetched successfully", data: rows });
     } catch (error) {
         res.status(500).json({
             status: false,
@@ -208,39 +132,16 @@ exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if limit exists
-        const { data: existingLimit, error: findError } = await supabase
-            .from('amount_limit')
-            .select('*')
-            .eq('limit_id', id)
-            .eq('user_id', req.user.userId)
-            .single();
+        const { rowCount } = await pool.query(
+            'DELETE FROM amount_limit WHERE limit_id = $1 AND user_id = $2',
+            [id, req.user.userId]
+        );
 
-        if (!existingLimit) {
-            return res.status(404).json({
-                status: false,
-                msg: 'Limit not found'
-            });
+        if (rowCount === 0) {
+            return res.status(404).json({ status: false, msg: 'Limit not found' });
         }
 
-        // Delete the limit
-        const { error: deleteError } = await supabase
-            .from('amount_limit')
-            .delete()
-            .eq('limit_id', id);
-
-        if (deleteError) {
-            return res.status(500).json({
-                status: false,
-                msg: 'Failed to delete limit',
-                error: deleteError.message
-            });
-        }
-
-        res.status(200).json({
-            status: true,
-            msg: "Limit deleted successfully"
-        });
+        res.status(200).json({ status: true, msg: "Limit deleted successfully" });
     } catch (error) {
         res.status(500).json({
             status: false,

@@ -1,4 +1,4 @@
-const supabase = require("../config/supabase.js");
+const { pool } = require("../config/supabase.js");
 const emailService = require("../utils/email.service.js");
 const { startOfWeek, endOfWeek, format } = require('date-fns');
 
@@ -9,72 +9,56 @@ const generateAndSendReport = async (user) => {
         const userEmail = user.email;
         const userName = user.name;
 
-        // 1. Get all ledgers for the user
-        const { data: ledgers, error: ledgerError } = await supabase
-            .from('ledgers')
-            .select('ledger_id, ledger_name')
-            .eq('user_id', userId);
-
-        if (ledgerError || !ledgers || ledgers.length === 0) {
-            console.log(`Skipping user ${userId}: No ledgers found`);
-            return { userId, status: 'skipped', reason: 'No ledgers found' };
-        }
-
         const today = new Date();
         const start = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
         const end = endOfWeek(today, { weekStartsOn: 1 });
         const startDateStr = format(start, 'yyyy-MM-dd');
         const endDateStr = format(end, 'yyyy-MM-dd');
 
+        // Optimized Query: Fetch all ledgers, their limits, and their weekly totals in ONE trip
+        const { rows: reportData } = await pool.query(
+            `SELECT 
+                l.ledger_id, 
+                l.name as ledger_name, 
+                COALESCE(al.daily_limit, 0) as daily_limit,
+                COALESCE(SUM(CASE 
+                    WHEN t.transaction_type = 'CREDIT' THEN -t.amount 
+                    WHEN t.transaction_type = 'DEBIT' THEN t.amount 
+                    ELSE 0 
+                END), 0) as total_spend
+             FROM ledgers l
+             LEFT JOIN amount_limit al ON l.ledger_id = al.ledger_id AND l.user_id = al.user_id
+             LEFT JOIN transactions t ON l.ledger_id = t.ledger_id AND t.date >= $2 AND t.date <= $3
+             WHERE l.user_id = $1
+             GROUP BY l.ledger_id, l.name, al.daily_limit`,
+            [userId, startDateStr, endDateStr]
+        );
+
+        if (reportData.length === 0) {
+            console.log(`Skipping user ${userId}: No ledgers found`);
+            return { userId, status: 'skipped', reason: 'No ledgers found' };
+        }
+
         let ledgerReportsHtml = '';
         let hasData = false;
 
-        for (const ledger of ledgers) {
-            const ledgerId = ledger.ledger_id;
-            const ledgerName = ledger.ledger_name;
+        for (const ledger of reportData) {
+            const dailyLimit = parseFloat(ledger.daily_limit);
+            const totalSpend = parseFloat(ledger.total_spend);
+            
+            // Skip ledgers with no activity and no limits
+            if (dailyLimit === 0 && totalSpend === 0) continue;
 
-            // 2. Get Limits for this ledger
-            const { data: limitData, error: limitError } = await supabase
-                .from('amount_limit')
-                .select('daily_limit')
-                .eq('user_id', userId)
-                .eq('ledger_id', ledgerId)
-                .single();
-
-            if (limitError || !limitData) {
-                continue; // Skip ledgers without limits
-            }
-
-            const dailyLimit = limitData.daily_limit;
             const weeklyLimit = dailyLimit * 7;
-
-            // 3. Get Weekly Transaction Total for this ledger
-            const { data: transactions, error: transError } = await supabase
-                .from('transactions')
-                .select('amount, transaction_type')
-                .eq('user_id', userId)
-                .eq('ledger_id', ledgerId)
-                .gte('date', startDateStr)
-                .lte('date', endDateStr);
-
-            if (transError) {
-                 console.error(`Error fetching transactions for user ${userId}, ledger ${ledgerId}:`, transError);
-                 continue;
-            }
-
-            const totalSpend = transactions.reduce((sum, t) => {
-                return t.transaction_type === 'CREDIT' ? sum - t.amount : sum + t.amount;
-            }, 0);
-
             const remaining = weeklyLimit - totalSpend;
             const isOverspent = remaining < 0;
-            const difference = Math.abs(remaining);
+            const difference = Math.abs(remaining).toFixed(2);
             hasData = true;
 
             ledgerReportsHtml += `
                 <div style="margin-bottom: 30px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
                     <div style="background-color: #4F46E5; color: white; padding: 10px 15px;">
-                        <h3 style="margin: 0; font-size: 16px;">Ledger: ${ledgerName}</h3>
+                        <h3 style="margin: 0; font-size: 16px;">Ledger: ${ledger.ledger_name}</h3>
                     </div>
                     <div style="padding: 15px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -83,7 +67,7 @@ const generateAndSendReport = async (user) => {
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                             <span style="color: #6B7280;">Total Spent:</span>
-                            <strong style="color: #111827;">₹${totalSpend}</strong>
+                            <strong style="color: #111827;">₹${totalSpend.toFixed(2)}</strong>
                         </div>
                         
                         <div style="text-align: center; padding: 15px; background-color: ${isOverspent ? '#FEE2E2' : '#D1FAE5'}; border-radius: 6px; color: ${isOverspent ? '#B91C1C' : '#047857'};">
@@ -137,15 +121,10 @@ const generateAndSendReport = async (user) => {
 
 exports.sendWeeklyReportToAll = async (req, res) => {
     try {
-        const { data: users, error } = await supabase
-            .from('users')
-            .select('user_id, email, name')
-            .not('email', 'is', null);
+        const { rows: users } = await pool.query(
+            'SELECT user_id, email, name FROM users WHERE email IS NOT NULL'
+        );
 
-        if (error) {
-            console.error("Error fetching users:", error);
-            return res.status(500).json({ status: false, msg: 'Failed to fetch users', error });
-        }
         
         // 2. Process each user
         const results = [];

@@ -1,25 +1,19 @@
-const supabase = require("../config/supabase.js");
+const { pool } = require("../config/supabase.js");
 const { sendEmail } = require("../utils/email.service");
 
 exports.getProfile = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { data, error } = await supabase
-            .from('users')
-            .select('user_id, name, username, email, is_verified')
-            .eq('user_id', userId)
-            .single();
+        const { rows } = await pool.query(
+            'SELECT user_id, name, username, email, is_verified FROM users WHERE user_id = $1 LIMIT 1',
+            [userId]
+        );
 
-        if (error) {
-            console.error("Supabase Profile Fetch Error:", error);
-            return res.status(500).json({ status: false, msg: 'Error fetching profile', error: error.message });
-        }
-
-        if (!data) {
+        if (rows.length === 0) {
             return res.status(404).json({ status: false, msg: 'User not found' });
         }
 
-        res.status(200).json({ status: true, data });
+        res.status(200).json({ status: true, data: rows[0] });
     } catch (error) {
         console.error("Internal getProfile Error:", error);
         res.status(500).json({ status: false, msg: 'Internal Server Error', error: error.message });
@@ -32,34 +26,29 @@ exports.updateProfile = async (req, res) => {
         const { name, username, email } = req.body;
 
         // 1. Get current data to compare email
-        const { data: currentUser, error: fetchError } = await supabase
-            .from('users')
-            .select('email, is_verified')
-            .eq('user_id', userId)
-            .single();
+        const { rows: userRows } = await pool.query(
+            'SELECT email, is_verified FROM users WHERE user_id = $1 LIMIT 1',
+            [userId]
+        );
 
-        if (fetchError) return res.status(500).json({ status: false, msg: 'Fetch error' });
+        if (userRows.length === 0) return res.status(404).json({ status: false, msg: 'User not found' });
 
+        const currentUser = userRows[0];
         let is_verified = currentUser.is_verified; 
         if (email !== currentUser.email) {
             is_verified = false; // Mark as unverified if email changed
         }
 
-        const { data, error } = await supabase
-            .from('users')
-            .update({ name, username, email, is_verified })
-            .eq('user_id', userId)
-            .select()
-            .single();
+        const { rows: updatedRows } = await pool.query(
+            'UPDATE users SET name = $1, username = $2, email = $3, is_verified = $4 WHERE user_id = $5 RETURNING *',
+            [name, username, email, is_verified, userId]
+        );
 
-        if (error) {
-             if (error.code === '23505') {
-                 return res.status(400).json({ status: false, msg: 'Username or Email already taken' });
-             }
-             return res.status(500).json({ status: false, msg: 'Update error', error: error.message });
-        }
-
-        res.status(200).json({ status: true, msg: 'Profile updated successfully', data });
+        res.status(200).json({ 
+            status: true, 
+            msg: 'Profile updated successfully', 
+            data: updatedRows[0] 
+        });
     } catch (error) {
         res.status(500).json({ status: false, msg: 'Internal Server Error', error: error.message });
     }
@@ -72,21 +61,29 @@ exports.sendVerificationOtp = async (req, res) => {
 
         const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // Store name, username, email and otp in temp_registrations
-        const { error: tempError } = await supabase.from('temp_registrations').upsert({
-            email,
-            otp,
-            name,
-            username,
-            user_id: userId, 
-            created_at: new Date(),
-            expires_at: new Date(Date.now() + 10 * 60 * 1000)
-        });
-
-        if (tempError) {
-            console.error('OTP Storage Error:', tempError);
-            return res.status(500).json({ status: false, msg: 'Failed to store OTP' });
-        }
+        // Store name, username, email and otp in temp_registrations using raw SQL
+        // Upsert logic for PostgreSQL
+        await pool.query(
+            `INSERT INTO temp_registrations (email, otp, name, username, user_id, created_at, expires_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (user_id) 
+             DO UPDATE SET 
+                email = EXCLUDED.email, 
+                otp = EXCLUDED.otp, 
+                name = EXCLUDED.name, 
+                username = EXCLUDED.username, 
+                created_at = EXCLUDED.created_at, 
+                expires_at = EXCLUDED.expires_at`,
+            [
+                email, 
+                otp, 
+                name, 
+                username, 
+                userId, 
+                new Date(), 
+                new Date(Date.now() + 10 * 60 * 1000)
+            ]
+        );
 
         const htmlContent = `<h3>Your Verification OTP is: <b>${otp}</b></h3><p>Verify your changes.</p>`;
         await sendEmail(email, 'Verify your email change', htmlContent);
@@ -102,33 +99,25 @@ exports.verifyEmail = async (req, res) => {
         const userId = req.user.userId;
         const { otp, email } = req.body;
 
-        const { data: tempData, error: fetchError } = await supabase
-            .from('temp_registrations')
-            .select('*')
-            .eq('otp', otp)
-            .eq('email', email)
-            .eq('user_id', userId)
-            .single();
+        const { rows: tempRows } = await pool.query(
+            'SELECT * FROM temp_registrations WHERE otp = $1 AND email = $2 AND user_id = $3 LIMIT 1',
+            [otp, email, userId]
+        );
 
-        if (fetchError || !tempData) {
+        if (tempRows.length === 0) {
             return res.status(400).json({ status: false, msg: 'Invalid or expired OTP' });
         }
 
-        // Update user status and info from temp table (move data to main table)
-        const { error: updateError } = await supabase
-            .from('users')
-            .update({ 
-                is_verified: true,
-                name: tempData.name,
-                username: tempData.username,
-                email: tempData.email
-            })
-            .eq('user_id', userId);
+        const tempData = tempRows[0];
 
-        if (updateError) return res.status(500).json({ status: false, msg: 'Verification update failed' });
+        // Update user status and info from temp table (move data to main table)
+        await pool.query(
+            'UPDATE users SET is_verified = true, name = $1, username = $2, email = $3 WHERE user_id = $4',
+            [tempData.name, tempData.username, tempData.email, userId]
+        );
 
         // Cleanup
-        await supabase.from('temp_registrations').delete().eq('otp', otp).eq('user_id', userId);
+        await pool.query('DELETE FROM temp_registrations WHERE otp = $1 AND user_id = $2', [otp, userId]);
 
         res.status(200).json({ status: true, msg: 'Email verified successfully' });
     } catch (error) {
