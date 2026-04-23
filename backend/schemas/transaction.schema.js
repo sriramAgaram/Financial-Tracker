@@ -29,7 +29,7 @@ const transactionSchemas = {
             pageNumber: z.number({ required_error: "Page number is required" }).min(1),
             rows: z.number({ required_error: "Rows per page is required" }).min(1),
             ledger_id: z.any().optional(),
-            category: z.array(z.number()).optional(),
+            category: z.array(z.string()).optional(),
         }),
     }),
 };
