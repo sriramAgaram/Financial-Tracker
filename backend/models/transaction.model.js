@@ -8,7 +8,8 @@ exports.getTransactionFields = (fields) =>{
     'expense_type_id',
     'amount',
     'date',
-    'transaction_type'
+    'transaction_type',
+    'notes'
    ])
 }
 

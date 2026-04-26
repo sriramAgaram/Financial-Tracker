@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const dotenv = require('dotenv');
 const cors = require('cors');
-const { globalLimiter, authLimiter } = require('./middleware/rateLimiter');
+const { globalLimiter, burstLimiter, authLimiter } = require('./middleware/rateLimiter');
 
 app.set('trust proxy', 1); // for real users ip 
 const authRoute = require('./router/auth.route');
@@ -18,6 +18,7 @@ app.use(cors());
 dotenv.config();
 const port = process.env.PORT || 8080
 app.use(express.json());
+app.use(burstLimiter);
 app.use(globalLimiter);
 
 app.use('/auth', authLimiter, authRoute);

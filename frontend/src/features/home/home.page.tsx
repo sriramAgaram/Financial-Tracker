@@ -3,6 +3,8 @@ import { useDispatch } from 'react-redux'
 import { selectDashboardData } from './redux/homeSlice';
 import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
+import { InputTextarea } from 'primereact/inputtextarea';
+import { FloatLabel } from 'primereact/floatlabel';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { addTransactionActions, homeDataActions } from './redux/homeSagas';
 import { useExpenseTypes } from '../../hooks/useExpenseTypes';
@@ -24,10 +26,11 @@ const HomePage: React.FC = () => {
   const amountData = useAppSelector(selectDashboardData);
   const expenseTypes = useExpenseTypes();
   const [data, setData] = useState({
-    expences_type_id: null,
+    expences_type_id: 0,
     amount: 0,
     date: new Date(),
-    transaction_type: 'DEBIT'
+    transaction_type: 'DEBIT',
+    notes: ''
   });
 
   useEffect(() => {
@@ -64,16 +67,18 @@ const HomePage: React.FC = () => {
       }
 
       dispatch(addTransactionActions.request({
-        expense_type_id: data.expences_type_id,
+        expense_type_id: Number(data.expences_type_id),
         amount: data.amount,
         date: data.date ? format(data.date, 'yyyy-MM-dd') : '',
-        transaction_type: data.transaction_type
+        transaction_type: data.transaction_type,
+        notes: data.notes
       }));
       setData({
-        expences_type_id: null,
+        expences_type_id: 0,
         amount: 0,
         date: new Date(),
-        transaction_type: 'DEBIT'
+        transaction_type: 'DEBIT',
+        notes: ''
       })
       dispatch(homeDataActions.request());
     }
@@ -206,11 +211,26 @@ const HomePage: React.FC = () => {
               </div>
             </div>
 
+              {/* Notes Section */}
+            <div className="space-y-2">
+              <FloatLabel>
+                <label htmlFor="notes" className="text-slate-400">Add some details...</label>
+                <InputTextarea 
+                  id="notes" 
+                  value={data.notes} 
+                  onChange={(e) => setData(prev => ({ ...prev, notes: e.target.value }))} 
+                  rows={3} 
+                  autoResize
+                  className="w-full bg-white border-slate-200 rounded-2xl p-4 text-sm text-slate-900 shadow-sm focus:border-slate-900 transition-all outline-none" 
+                />
+              </FloatLabel>
+            </div>
+
             {/* Amount Input */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Amount</label>
               <div className="relative bg-white rounded-3xl group-focus-within:border-red-600/50 transition-all flex items-center">
-                <span className={`text-3xl font-bold mr-2 ${data.transaction_type === 'DEBIT' ? 'text-red-600' : 'text-emerald-600'}`}>₹</span>
+                {/* <span className={`text-3xl font-bold mr-2 ${data.transaction_type === 'DEBIT' ? 'text-red-600' : 'text-emerald-600'}`}>₹</span> */}
                 <InputNumber
                   value={data.amount || null}
                   onValueChange={(e) => setData(prev => ({ ...prev, amount: e.value || 0 }))}

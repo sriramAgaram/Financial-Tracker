@@ -98,7 +98,7 @@ exports.lists = async (req, res) => {
         // Get Transactions and Total Count in parallel
         const [transactionsRes, countRes, filteredTotalRes] = await Promise.all([
             pool.query(
-                `SELECT transactions.transaction_id, transactions.amount, transactions.date, transactions.expense_type_id, transactions.user_id, transactions.ledger_id, transactions.transaction_type, ex.expense_name 
+                `SELECT transactions.transaction_id, transactions.amount, transactions.date, transactions.notes, transactions.expense_type_id, transactions.user_id, transactions.ledger_id, transactions.transaction_type, ex.expense_name 
                  FROM transactions LEFT JOIN expense_type ex ON transactions.expense_type_id = ex.expense_type_id 
                 WHERE ${whereString} 
                  ORDER BY transactions.date DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,

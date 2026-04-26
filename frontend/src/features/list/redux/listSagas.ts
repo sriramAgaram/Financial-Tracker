@@ -6,7 +6,7 @@ import apiClient from "../../../client/api.clinet";
 
 
 export const listTransactionActions = createApiActions<{pageNumber:number,rows:number, category?: number[], fromDate?: string, toDate?: string}, {pageNumber:number,rows:number, category?: number[]}>('transaction/lists');
-export const updateTransactionActions = createApiActions<{amount:number,expense_type_id:number,transaction_id:number, date?: string | null}, {amount:number,expense_type_id:number,transaction_id:number, date?: string | null}>('transaction/update');
+export const updateTransactionActions = createApiActions<{amount:number,expense_type_id:number,transaction_id:number, date?: string | null, notes?: string}, {amount:number,expense_type_id:number,transaction_id:number, date?: string | null}>('transaction/update');
 export const deleteTransactionActions = createApiActions<{transaction_id:number}, {transaction_id:number}>('transaction/delete');
 
 
@@ -15,7 +15,7 @@ const getAllTransactions =async (payload:{pageNumber:number,rows:number, categor
   return response
 }
 
-const updateTransaction =async (payload:{amount:number,expense_type_id:number,transaction_id:number, date?: string | null}) =>{
+const updateTransaction =async (payload:{amount:number,expense_type_id:number,transaction_id:number, date?: string | null, notes?: string}) =>{
   const {transaction_id} = payload
   const response = await apiClient.put('/transaction/update/'+transaction_id, payload);
   return response

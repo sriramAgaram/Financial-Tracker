@@ -184,6 +184,11 @@ const ListPage = () => {
                             <i className="pi pi-calendar text-xs text-slate-400"></i>
                             <span className="text-slate-500 text-xs font-medium">{date}</span>
                         </div>
+                        {item.notes && (
+                          <div className="mt-3 text-[11px] text-slate-500 italic bg-amber-50/50 p-2 rounded-lg border-l-2 border-amber-200 line-clamp-2 max-w-[200px] sm:max-w-md">
+                            "{item.notes}"
+                          </div>
+                        )}
                       </div>
                     </div>
 

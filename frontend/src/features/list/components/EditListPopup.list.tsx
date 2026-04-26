@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useExpenseTypes } from "../../../hooks/useExpenseTypes";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
 import { useDispatch } from "react-redux";
 import { updateTransactionActions } from "../redux/listSagas";
 import { Button } from "primereact/button";
@@ -14,7 +15,8 @@ export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
     const [formData, setFormData] = useState({
         amount: data?.amount || 0,
         expense_type_id: data?.expense_type_id || null,
-        date: data?.date ? new Date(data.date) : null
+        date: data?.date ? new Date(data.date) : null,
+        notes: data?.notes || ''
     })
 
     const expencesTypes = useExpenseTypes();
@@ -26,9 +28,10 @@ export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
 
         dispatch(updateTransactionActions.request({
             amount: Number.parseFloat(formData.amount),
-            expense_type_id: formData.expense_type_id,
+            expense_type_id: Number(formData.expense_type_id),
             transaction_id: data.transaction_id,
-            date: formData.date ? format(formData.date, 'yyyy-MM-dd') : null
+            date: formData.date ? format(formData.date, 'yyyy-MM-dd') : null,
+            notes: formData.notes
         }))
         setVisible(false);
     }
@@ -38,7 +41,8 @@ export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
             setFormData({
                 amount: data?.amount,
                 expense_type_id: data?.expense_type_id,
-                date: data?.date ? new Date(data.date) : null
+                date: data?.date ? new Date(data.date) : null,
+                notes: data?.notes || ''
             })
         }
     }, [data])
@@ -94,6 +98,21 @@ export const EditSettingPopup = ({ data, visible, setVisible }: any) => {
                             className="w-full"
                         />
                         <label htmlFor="edit-amount">Amount</label>
+                    </span>
+
+                    <span className="p-float-label w-full mt-2">
+                        <InputTextarea
+                            id="edit-notes"
+                            value={formData.notes}
+                            onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                notes: e.target.value
+                            }))}
+                            rows={3}
+                            autoResize
+                            className="w-full"
+                        />
+                        <label htmlFor="edit-notes">Notes (Optional)</label>
                     </span>
 
                     <Button
