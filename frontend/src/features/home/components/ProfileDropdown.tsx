@@ -118,7 +118,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isOpen, onClose }) =>
                   <div className="flex flex-col items-start">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Ledger</span>
                     <span className="text-sm font-bold truncate max-w-[120px]">
-                      {ledgers.find(l => l.ledger_id === activeLedgerId)?.name || 'Select Ledger'}
+                      {ledgers.find(l => Number(l.ledger_id) === Number(activeLedgerId))?.name || 'Select Ledger'}
                     </span>
                   </div>
                 </div>
@@ -176,10 +176,10 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ isOpen, onClose }) =>
                     onClick={() => handleLedgerChange(ledger.ledger_id)}
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors"
                   >
-                    <span className={`text-sm ${ledger.ledger_id === activeLedgerId ? 'font-bold text-red-600' : 'text-slate-700'}`}>
+                    <span className={`text-sm ${Number(ledger.ledger_id) === Number(activeLedgerId) ? 'font-bold text-red-600' : 'text-slate-700'}`}>
                       {ledger.name}
                     </span>
-                    {ledger.ledger_id === activeLedgerId && <Check size={16} className="text-red-600" />}
+                    {Number(ledger.ledger_id) === Number(activeLedgerId) && <Check size={16} className="text-red-600" />}
                   </button>
                 ))}
               </div>
